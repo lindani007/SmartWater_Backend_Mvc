@@ -1,0 +1,80 @@
+﻿
+body {
+    margin-block: 0px;
+    background-color: black;
+}
+
+
+.my-anime {
+    background: linear-gradient(to right, #ff007f, #00f0ff, #ff007f);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: move 5s linear infinite;
+}
+
+@keyframes move {
+    0% {
+        background-position: 0% center; /* Starts the color ribbon at the beginning */
+    }
+
+    100% {
+        background-position: 200% center; /* Slides the ribbon completely to the end */
+    }
+}
+
+.my-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-items: center;
+}
+
+.my-form {
+    display: flex;
+    flex-direction: column;
+    border: solid 1px #30e3e9;
+    padding: 15px;
+    align-items: center;
+    width: 500px;
+    box-shadow: 1px 1px 0px 0px white;
+    border-radius: 10px;
+    margin: 120px;
+}
+
+.my-form-header {
+    display: flex;
+    flex-direction: row;
+    border-radius: 10px;
+    padding: 15px;
+    background-color: #393636;
+}
+
+.my-inputs-div {
+    color: white;
+    margin: 10px;
+}
+
+input {
+    border-radius: 10px;
+    text-align: center;
+    background-color: transparent;
+    color: white;
+}
+
+button {
+    width: 150px;
+    background-color: #30e3e9;
+    margin: 10px;
+    border-radius: 10px;
+}
+
+label {
+    width: 70px;
+}
+
+input[type="password"]::-webkit-credentials-invert-button,
+input[type="password"]::-ms-reveal {
+    filter: invert(1);
+}

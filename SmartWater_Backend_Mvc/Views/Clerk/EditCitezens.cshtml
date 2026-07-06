@@ -1,0 +1,50 @@
+﻿@model SmartWater_Backend_Mvc.Models.Owner
+
+@{
+    ViewData["Title"] = "Update Citezen Details";
+    Layout = "_ClerkLayout";
+}
+<form asp-action="EditCitezens" method="post">
+
+    <div class="my-container">
+        <div class="my-form">
+            <h1>Update Citezens Details</h1>
+            <div class="my-inputs-div">
+                <label>Full Names</label>
+                <input asp-for="OwnerName" placeholder="Full Names" type="text" />
+            </div>
+            <div class="my-inputs-div">
+                <label hidden>Id Numbere</label>
+                <input asp-for="OwnerId_Number" placeholder="Id Number" type="hidden" />
+            </div>
+            <div class="my-inputs-div">
+                <label>Account Numbere</label>
+                <input asp-for="Account_Number" placeholder="Account Number" type="text" />
+            </div>
+            <div class="my-inputs-div">
+                <label>Meter Number</label>
+                <input asp-for="Meter_Number" placeholder="Meter Number" type="text" />
+            </div>
+            <div class="my-inputs-div">
+                <label>Email</label>
+                <input asp-for="Email" placeholder="Email" type="email" />
+            </div>
+            <div class="my-inputs-div">
+                <label>Phone Number</label>
+                <input asp-for="Phone" placeholder="Phone Number" type="tel" />
+            </div>
+            <div class="my-inputs-div">
+                <label>House Number</label>
+                <input asp-for="HouseId" placeholder="House Number" type="number" />
+            </div>
+            <div class="my-inputs-div">
+                <label>Sub-RegiON Name</label>
+                <input asp-for="SubRegionName" placeholder="Sub-Region Name" type="text" />
+            </div>
+            
+            <button type="submit">Update Citezen</button>
+            <span style="color:white">@ViewData["Message"]</span>
+            <div asp-validation-summary="All" class="text-danger"></div>
+        </div>
+    </div>
+</form>

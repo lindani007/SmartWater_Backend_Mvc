@@ -1,0 +1,173 @@
+﻿@using System.Globalization
+@model IEnumerable<SmartWater_Backend_Mvc.Models.SubRegion>
+
+@{
+    ViewData["Title"] = "Sub-Regions";
+    Layout = "_FinanceLayout";
+
+    double totalExpected = Model.Sum(x => x.Expected_Cost);
+    double totalActual = Model.Sum(x => x.Actual_Cost);
+    double totalOutstanding = totalExpected - totalActual;
+}
+
+<div style="display:flex; flex-direction: row; justify-content: space-between; align-items: center; padding: 10px 20px;">
+    <h1 style="color:white; margin:10px; font-size: 24px;">Water Payment History for: @DateTime.Now.Date.ToString("yyyy MMMM dd")</h1>
+    <div class="d-flex gap-2">
+        <a asp-action="ViewFutureForecasts" class="btn fw-bold shadow-sm" style="background-color: #ff3366; color: #fff; border-radius: 8px; padding: 10px 20px; text-decoration:none; transition: all 0.2s;">
+            🔮 View Future SubRegion Consumption
+        </a>
+        <button asp-action="SummarizeFinanceReport" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px; padding: 10px 20px; transition: all 0.2s;">
+            ✨ Summarize Finance Report
+        </button>
+    </div>
+</div>
+
+<!-- FINANCIAL CARD METRIC SUMMARIES -->
+<div class="row g-3 mx-2 mb-3 text-white">
+    <div class="col-md-4">
+        <div class="p-3 rounded text-center" style="background-color: #1e1e24; border-left: 5px solid #00f0ff; border-top: 1px solid #333; border-right: 1px solid #333; border-bottom: 1px solid #333;">
+            <small class="text-white-50 text-uppercase d-block fw-bold mb-1">Total Expected Revenue</small>
+            <h3 class="fw-bold mb-0 text-info">@totalExpected.ToString("C", CultureInfo.CreateSpecificCulture("en-ZA"))</h3>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="p-3 rounded text-center" style="background-color: #1e1e24; border-left: 5px solid #28a745; border-top: 1px solid #333; border-right: 1px solid #333; border-bottom: 1px solid #333;">
+            <small class="text-white-50 text-uppercase d-block fw-bold mb-1">Total Actual Collected</small>
+            <h3 class="fw-bold mb-0 text-success">@totalActual.ToString("C", CultureInfo.CreateSpecificCulture("en-ZA"))</h3>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="p-3 rounded text-center" style="background-color: #1e1e24; border-left: 5px solid #ff3366; border-top: 1px solid #333; border-right: 1px solid #333; border-bottom: 1px solid #333;">
+            <small class="text-white-50 text-uppercase d-block fw-bold mb-1">Total Outstanding Debt</small>
+            <h3 class="fw-bold mb-0 text-danger">@totalOutstanding.ToString("C", CultureInfo.CreateSpecificCulture("en-ZA"))</h3>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex flex-wrap align-items-center gap-3 m-3 p-3 rounded" style="background-color: #1e1e24; border: 1px solid #333;">
+    <div>
+        <input type="text" id="tableSearch" placeholder="Search Sub-Region..." class="form-control"
+               style="background-color: #121212; color: #fff; border: 1px solid #00f0ff; max-width: 250px;" />
+    </div>
+    <div>
+        <select id="statusFilter" class="form-select" style="background-color: #121212; color: #fff; border: 1px solid #00f0ff;">
+            <option value="all">All Sub-Regions</option>
+            <option value="outstanding">Has Outstanding Water (>0)</option>
+            <option value="good">Doing Good (No Outstanding Cost)</option>
+            <option value="bad">Doing Bad (Has Outstanding Cost)</option>
+        </select>
+    </div>
+    <div class="ms-auto d-flex align-items-center gap-3">
+        <button asp-action="SummarizeRegionReport" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; min-width: 190px; border-radius: 8px; padding: 8px 16px;">
+            ✨ Summarize SubRegion Report
+        </button>
+        <button id="downloadBtn" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px; padding: 8px 16px;">
+            📥 Download Report
+        </button>
+        <span class="text-muted small" style="color: #aaa !important;width:160px;">
+            *Note: You are downloading exactly what you are currently viewing.
+        </span>
+    </div>
+</div>
+
+<div style="height:100vh" class="table-responsive rounded shadow">
+    <table id="reportsTable" style="margin:15px; border-radius:10px;" class="table table-dark table-hover mb-0">
+        <thead style="border-bottom: 2px solid #00f0ff; margin:5px; background-color:#00f0ff;">
+            <tr>
+                <th scope="col">Sub-Region Name</th>
+                <th scope="col">Distributed (kl)</th>
+                <th scope="col">Used (Kl)</th>
+                <th scope="col">OutStanding (kl)</th>
+                <th scope="col">Total Free Water (Kl)</th>
+                <th scope="col">Expected Amount(R)</th>
+                <th scope="col">Actual Amount(R)</th>
+                <th scope="col">Out-Standing Amount(R)</th>
+                <th scope="col" class="no-export">Sub-Regions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var region in Model)
+            {
+                double oustanding = region.Water_Sent - region.Water_Used;
+                var outstandingCost = region.Expected_Cost - region.Actual_Cost;
+                <tr class="region-row"
+                    data-region="@region.SubRegion_Name.ToLower()"
+                    data-outstanding-water="@region.Water_Thats_OutStanding"
+                    data-outstanding-cost="@outstandingCost">
+                    <td>@region.SubRegion_Name</td>
+                    <td>@region.Water_Sent.ToString("F2")</td>
+                    <td>@region.Water_Used.ToString("F2")</td>
+                    <td>@oustanding.ToString("F2")</td>
+                    <td>@region.FreeWater.Value.ToString("F2")</td>
+                    <td>@region.Expected_Cost.ToString("C", CultureInfo.CreateSpecificCulture("en-ZA"))</td>
+                    <td>@region.Actual_Cost.ToString("C", CultureInfo.CreateSpecificCulture("en-za"))</td>
+                    <td>@outstandingCost.ToString("C", CultureInfo.CreateSpecificCulture("en-za"))</td>
+                    <td class="no-export"><a asp-action="HouseHolds" asp-route-id="@region.SubRegion_Id" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px; padding: 10px 20px; text-decoration: none; display: inline-block; transition: all 0.2s;">Households</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const searchInput = document.getElementById("tableSearch");
+        const statusFilter = document.getElementById("statusFilter");
+        const rows = document.querySelectorAll(".region-row");
+        const downloadBtn = document.getElementById("downloadBtn");
+
+        function filterTable() {
+            const searchText = searchInput.value.toLowerCase();
+            const filterValue = statusFilter.value;
+
+            rows.forEach(row => {
+                const regionName = row.getAttribute("data-region");
+                const outstandingWater = parseFloat(row.getAttribute("data-outstanding-water")) || 0;
+                const outstandingCost = parseFloat(row.getAttribute("data-outstanding-cost")) || 0;
+                const matchesSearch = regionName.includes(searchText);
+
+                let matchesStatus = true;
+                if (filterValue === "outstanding") {
+                    matchesStatus = outstandingWater > 0;
+                } else if (filterValue === "good") {
+                    matchesStatus = outstandingCost <= 0;
+                } else if (filterValue === "bad") {
+                    matchesStatus = outstandingCost > 0;
+                }
+
+                row.style.display = (matchesSearch && matchesStatus) ? "" : "none";
+            });
+        }
+
+        searchInput.addEventListener("input", filterTable);
+        statusFilter.addEventListener("change", filterTable);
+
+        downloadBtn.addEventListener("click", function() {
+            let csvContent = "";
+            const table = document.getElementById("reportsTable");
+            const headers = Array.from(table.querySelectorAll("thead th"))
+                .filter(th => !th.classList.contains("no-export"))
+                .map(th => `"${th.innerText.trim()}"`);
+
+            csvContent += headers.join(",") + "\n";
+            const visibleRows = Array.from(table.querySelectorAll("tbody tr")).filter(row => row.style.display !== "none");
+
+            visibleRows.forEach(row => {
+                const cells = Array.from(row.querySelectorAll("td"))
+                    .filter(cell => !cell.classList.contains("no-export"))
+                    .map(cell => `"${cell.innerText.trim().replace(/"/g, '""')}"`);
+                csvContent += cells.join(",") + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Water_Payment_Report_${new Date().toISOString().slice(0, 10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    });
+</script>
+

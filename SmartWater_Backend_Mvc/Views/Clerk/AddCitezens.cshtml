@@ -1,0 +1,54 @@
+﻿@model SmartWater_Backend_Mvc.Models.Owner
+
+@{
+    ViewData["Title"] = "Add Citezen";
+    Layout = "_ClerkLayout";
+}
+<form asp-action="AddCitezens" method="post">
+
+    <div class="my-container">
+        <div class="my-form">
+           <h1>Add Citezens</h1>
+            <div class="my-inputs-div">
+                <label>Full Names</label>
+                <input asp-for="OwnerName" placeholder="Full Names" type="text" />
+            </div>
+            <div class="my-inputs-div">
+                <label>Id Numbere</label>
+                <input asp-for="OwnerId_Number" placeholder="Id Number" type="text" />
+            </div>
+            <div class="my-inputs-div">
+                <label>Meter Number</label>
+                <input asp-for="Meter_Number" placeholder="Meter Number" type="text" />
+            </div>
+            <div class="my-inputs-div">
+                <label>Email</label>
+                <input asp-for="Email" placeholder="Email" type="email" />
+            </div>
+            <div class="my-inputs-div">
+                <label>Phone Number</label>
+                <input asp-for="Phone" placeholder="Phone Number" type="tel" />
+            </div>
+            <div class="my-inputs-div">
+                <label>House Number</label>
+                <input asp-for="HouseId" placeholder="House Number" type="number" />
+            </div>
+            <div class="my-inputs-div">
+                <label>Property Value</label>
+                <select asp-for="PropertyValue" style="width: 200px; border-radius:10px; background-color: transparent; color: aqua;text-align: center;">
+                    <option value="">Choose Value</option>
+                    <option value="Under250000">Under 250 000</option>
+                    <option value="Above250000">Above 250 000</option>
+                </select>
+            </div>
+            <div class="my-inputs-div">
+                <label>Sub-RegiON Name</label>
+                <input asp-for="SubRegionName" placeholder="Sub-Region Name" type="text" />
+            </div>
+            <button type="submit">Add Citezen</button>
+            <input type="hidden" asp-for="SubRegionId" />
+            <span style="color:white">@ViewData["Message"]</span>
+            <div asp-validation-summary="All" class="text-danger"></div>
+        </div>
+    </div>
+</form>

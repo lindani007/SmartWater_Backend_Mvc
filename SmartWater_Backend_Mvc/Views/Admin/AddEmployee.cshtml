@@ -1,0 +1,47 @@
+﻿@model SmartWater_Backend_Mvc.Models.Employee
+
+@{
+    ViewData["Title"] = "Add Employee";
+    Layout = "_adminLayout";
+}
+<form asp-action="AddEmployee" method="post">
+
+    <div class="my-container">
+        <div class="my-form">
+            <h1>Add Employee</h1>
+            <div class="my-inputs-div">
+                <label>Full Names</label>
+                <input asp-for="Employee_FullNames" placeholder="Full Names" type="text" />
+            </div>
+            <div class="my-inputs-div">
+                <label>ID Number</label>
+                <input asp-for="Employer_IdNumber" placeholder="Id Number" type="text" />
+            </div>
+            <div class="my-inputs-div">
+                <label>Address </label>
+                <input asp-for="Employee_Address" placeholder="Address" type="text" />
+            </div>
+            <div class="my-inputs-div">
+                <label>Email</label>
+                <input asp-for="Employer_Email" placeholder="Email" type="email" />
+            </div>
+            <div class="my-inputs-div">
+                <label>Phone Number</label>
+                <input asp-for="Employer_PhoneNumber" placeholder="Phone Number" type="tel" />
+            </div>
+            <div class="my-inputs-div">
+                <label>Role</label>
+                <select asp-for="Employer_Role" style="width: 200px; border-radius:10px; background-color: transparent; color: aqua;text-align: center;">
+                    <option value="">Choose Value</option>
+                    <option value="Clerk">Clerk</option>
+                    <option value="Engineer">Engineer</option>
+                    <option value="Finance">Finance</option>
+                    <option value="Admin">Admin</option>
+                </select>
+            </div>
+            <button type="submit">Add Employee</button>
+            <span style="color:white">@ViewData["Message"]</span>
+            <div asp-validation-summary="All" class="text-danger"></div>
+        </div>
+    </div>
+</form>

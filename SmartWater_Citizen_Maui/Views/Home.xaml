@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<FlyoutPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SmartWater_Citizen_Maui.Views.Home"
+             Title="Home" FlyoutLayoutBehavior="Popover">
+    <FlyoutPage.Flyout>
+        <ContentPage BackgroundColor="#121212" Title="Navigation">
+                <ScrollView>
+
+                    <StackLayout Spacing="10" Padding="10">
+                    <Label Margin="5"  Text="Smart Water Consumption" FontSize="18" FontAttributes="Bold"/>
+                    <Border>
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="15"/>
+                            </Border.StrokeShape>
+                            <Button Text="Home" BackgroundColor="#05faeb" Clicked="HomeClicked"/>
+                        </Border>
+                        <Border>
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="15"/>
+                            </Border.StrokeShape>
+                            <Button Text="Bills"  BackgroundColor="#05faeb" Clicked="BillsClicked"/>
+                        </Border>
+                        <Border>
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="15"/>
+                            </Border.StrokeShape>
+                            <Button Text="Leakage"  BackgroundColor="#05faeb" Clicked="LeakageClicked"/>
+                        </Border>
+                    <Border>
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="15"/>
+                        </Border.StrokeShape>
+                        <Button Text="My Appliances"  BackgroundColor="#05faeb" Clicked="AppliancesClicked"/>
+                    </Border>
+                    <StackLayout HeightRequest="250">
+                        
+                    </StackLayout>
+                    <StackLayout Margin="10" Orientation="Horizontal" VerticalOptions="End" BackgroundColor="#29ede7">
+                        <StackLayout Padding="10" VerticalOptions="End">
+                            <Label Margin="5" WidthRequest="{OnPlatform Android='220', iOS='220', Default='250'}" Text="Central Region Municipal" FontSize="20" FontAttributes="Bold"/>
+                            <Label Margin="5" WidthRequest="{OnPlatform Android='220', iOS='220', Default='250'}" Text="The Central mucipal wishes every one to take part in saving water for the future genations, life doen't end with us their are still more people coming. Save water, be a hero." />
+                        </StackLayout>
+                        <Image IsVisible="{OnPlatform Android='False', Default='True'}" Source="water.jpg" WidthRequest="300" HeightRequest="150" />
+                    </StackLayout>
+                </StackLayout>
+
+                </ScrollView>
+            </ContentPage>
+    </FlyoutPage.Flyout>
+</FlyoutPage>

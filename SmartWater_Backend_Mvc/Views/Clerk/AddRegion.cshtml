@@ -1,0 +1,25 @@
+﻿@model SmartWater_Backend_Mvc.Models.Region
+
+@{
+    ViewData["Title"] = "Add Region";
+    Layout = "_ClerkLayout";
+}
+<form asp-action="AddRegion" method="post">
+    <div class="my-container">
+        <div class="my-form">
+            <h1>Add Regions</h1>
+            <div class="my-inputs-div">
+                <label>Region Name</label>
+                <input asp-for="Region_Name" placeholder="Region Name" type="text" />
+            </div>
+            <div class="my-inputs-div">
+                <label>Meter Number</label>
+                <input asp-for="Meter_Number" placeholder="Meter Number" type="text" />
+            </div>
+            
+            <button type="submit">Add Region</button>
+            <span style="color:white">@ViewData["Message"]</span>
+            <div asp-validation-summary="All" class="text-danger"></div>
+        </div>
+    </div>
+</form>

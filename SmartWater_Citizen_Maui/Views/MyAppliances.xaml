@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SmartWater_Citizen_Maui.Views.MyAppliances"
+             xmlns:vm="clr-namespace:SmartWater_Citizen_Maui.ViewModels"
+             xmlns:m="clr-namespace:SmartWater_Citizen_Maui.Models"
+             Title="MyAppliances" x:DataType="vm:ApplienceViewModel" BackgroundColor="Black">
+    <ScrollView>
+        <VerticalStackLayout Spacing="8">
+            <HorizontalStackLayout Spacing="10" Padding="5" Margin="5"  HorizontalOptions="Start">
+                <Label Text="All your added appliances" TextColor="White" WidthRequest="{OnPlatform Android='150', iOS='150'}" FontSize="18" FontAttributes="Bold"/>
+                <StackLayout WidthRequest="{OnPlatform Android='0', iOS='0', Default='800'}"></StackLayout>
+                <Border WidthRequest="{OnPlatform Android='150', iOS='1500', Default='220'}">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="15"/>
+                    </Border.StrokeShape>
+                    <Button Text="Add More Appliances" WidthRequest="{OnPlatform Android='150', iOS='1500', Default='220'}" BackgroundColor="#05faeb" Command="{Binding AddMoreClickedCommand}"/>
+                </Border>
+            </HorizontalStackLayout>
+            <Grid BackgroundColor="#29ede7" Padding="10,8" ColumnDefinitions="2*,2*,1.5*,1.5*">
+                <Label Grid.Column="0" Text="Appliance Name" TextColor="Black" FontAttributes="Bold" VerticalOptions="Center"/>
+                <Label Grid.Column="1" Text="Meter Number" TextColor="Black" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center"/>
+                <Label Grid.Column="2" Text="Delete" TextColor="Black" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center"/>
+                <Label Grid.Column="3" Text="Edit" TextColor="Black" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center"/>
+            </Grid>
+
+            <CollectionView ItemsSource="{Binding MyAppliances}" SelectionMode="None">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="m:Appliance">
+                        <Grid Padding="10,12" ColumnDefinitions="2*,2*,1.5*,1.5*" BackgroundColor="#111" >
+                            <Label Grid.Column="0" Text="{Binding Appliance_Name}" TextColor="White" VerticalOptions="Center"/>
+                            <Label Grid.Column="1" Text="{Binding Metre_Number}" TextColor="White" HorizontalOptions="Center" VerticalOptions="Center"/>
+                            <Button Grid.Column="2" 
+                            Text="Delete" 
+                            FontSize="11"
+                            Padding="2"
+                            HeightRequest="30"
+                            BackgroundColor="#222" 
+                            TextColor="#29ede7"
+                            BorderColor="#29ede7"
+                            BorderWidth="1"
+                                    Margin="10"
+                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ApplienceViewModel}}, Path=DeleteClickedCommand}"
+                            CommandParameter="{Binding .}"/>    
+                            <Button Grid.Column="3" 
+                            Text="Edit" 
+                            FontSize="11"
+                            Padding="2"
+                            HeightRequest="30"
+                            BackgroundColor="#222" 
+                            TextColor="#29ede7"
+                            BorderColor="#29ede7"
+                            BorderWidth="1"
+                                    Margin="10"
+                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ApplienceViewModel}}, Path=EditClickedCommand}"
+                            CommandParameter="{Binding .}"/>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

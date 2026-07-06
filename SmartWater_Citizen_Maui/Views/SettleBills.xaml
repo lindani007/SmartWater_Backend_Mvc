@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:SmartWater_Citizen_Maui.ViewModels"
+             x:Class="SmartWater_Citizen_Maui.Views.SettleBills"
+             Title="SettleBills" BackgroundColor="Black" x:DataType="vm:SettleBillsViewModel">
+    <ScrollView>
+        <Border HorizontalOptions="Center" HeightRequest="370" Margin="10">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="15"/>
+            </Border.StrokeShape>
+
+            <StackLayout Spacing="5" Padding="5">
+                <StackLayout Margin="10" HorizontalOptions="Center">
+                    <Label Text="Amount To Pay" HorizontalOptions="Start" TextColor="White" WidthRequest="{OnPlatform Android='130', iOS='130', Default='210'}" FontSize="{OnPlatform Android='14', iOS='14', Default='20'}"/>
+                    <Border>
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="15"/>
+                        </Border.StrokeShape>
+                        <Entry Text="{Binding Amount_ToPay}" TextColor="White" Placeholder="Amount To Pay" WidthRequest="{OnPlatform Android='310', iOS='310', Default='310'}" HorizontalTextAlignment="Center"/>
+                    </Border>
+                </StackLayout>
+                <StackLayout Margin="10" HorizontalOptions="Center">
+                    <Label Text="Card Number" HorizontalOptions="Start" TextColor="White" WidthRequest="{OnPlatform Android='130', iOS='130', Default='210'}" FontSize="{OnPlatform Android='14', iOS='14', Default='20'}"/>
+                    <Border>
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="15"/>
+                        </Border.StrokeShape>
+                        <Entry Text="{Binding Card_Number}" TextColor="White" Placeholder="Card Number" WidthRequest="{OnPlatform Android='310', iOS='310', Default='310'}" HorizontalTextAlignment="Center"/>
+                    </Border>
+                </StackLayout>
+                <HorizontalStackLayout Spacing="3" HorizontalOptions="Center" >
+                    <StackLayout HorizontalOptions="Start">
+                        <Label Text="Expiring Date" TextColor="White" HorizontalOptions="Start" WidthRequest="{OnPlatform Android='100', iOS='100', Default='150'}" FontSize="{OnPlatform Android='11', iOS='11', Default='20'}"/>
+                        <Border WidthRequest="{OnPlatform Android='170', Default='203'}" HorizontalOptions="Start">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="15"/>
+                            </Border.StrokeShape>
+                            <Entry Text="{Binding Expiring_Date}" VerticalOptions="Center" TextColor="White" Placeholder="Expiring Date" WidthRequest="{OnPlatform Android='170', iOS='70', Default='200'}" HorizontalTextAlignment="Center"/>
+                        </Border>
+                    </StackLayout>
+                    <StackLayout HorizontalOptions="End">
+                        <Label Text="CSV" HorizontalOptions="Start" TextColor="White" WidthRequest="{OnPlatform Android='90', iOS='90', Default='100'}" FontSize="{OnPlatform Android='11', iOS='11', Default='20'}"/>
+                        <Border WidthRequest="100">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="15"/>
+                            </Border.StrokeShape>
+                            <Entry Text="{Binding CSV}" TextColor="White" Placeholder="CSV" WidthRequest="{OnPlatform Android='100', iOS='100', Default='100'}" HorizontalTextAlignment="Center"/>
+                        </Border>
+                    </StackLayout>
+                </HorizontalStackLayout>
+                <Border WidthRequest="120">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="15"/>
+                    </Border.StrokeShape>
+                    <Button Text="Pay" Command="{Binding PayClickedCommand}"  WidthRequest="120" BackgroundColor="#05faeb" />
+                </Border>
+            </StackLayout>
+        </Border>
+    </ScrollView>
+</ContentPage>

@@ -1,0 +1,21 @@
+﻿@model SmartWater_Backend_Mvc.Models.Login
+
+@{
+    ViewData["Title"] = "Verify Email";
+    Layout = "_AccountLayout";
+}
+
+<form action="VerfiyCode" method="post">
+
+    <div class="my-container">
+        <div class="my-form">
+            <h1 style="color:white">Verify Code</h1>
+            <div class="my-inputs-div">
+                <label>Email</label>
+                <input asp-for="Role" placeholder="Code" type="text" />
+            </div>
+            <button type="submit">Verify Code</button>
+            <span style="color:white">@ViewData["Message"]</span>
+        </div>
+    </div>
+</form>

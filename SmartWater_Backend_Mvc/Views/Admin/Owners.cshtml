@@ -1,0 +1,183 @@
+﻿@model IEnumerable<SmartWater_Backend_Mvc.Models.Owner>
+
+@{
+    ViewData["Title"] = "Account Management";
+    Layout = "_FinanceLayout";
+}
+
+<div class="d-flex flex-wrap gap-3 m-3 align-items-center justify-content-between">
+    <div class="d-flex align-items-center gap-3">
+        <a asp-action="AdminDashboard" class="btn btn-outline-light">Back to Dashboard</a>
+        <h2 class="text-white my-0 fw-bold">Account Payment Statuses</h2>
+    </div>
+
+    <button id="downloadFilteredReport" class="btn fw-bold px-4" style="background-color: #00f0ff; color: #121212;">
+        Download Filtered Report (CSV)
+    </button>
+</div>
+
+<div class="m-3 p-3 rounded" style="background-color: #1e1e24; border: 1px solid #333;">
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <label class="text-white-50 small fw-bold text-uppercase mb-1 d-block">Search Accounts</label>
+            <input type="text" id="tableSearch" class="form-control bg-dark text-white border-secondary" placeholder="Search by name, account or contact...">
+        </div>
+        <div class="col-md-3">
+            <label class="text-white-50 small fw-bold text-uppercase mb-1 d-block">Filter By SubRegion</label>
+            <select id="regionFilter" class="form-select bg-dark text-white border-secondary">
+                <option value="">All SubRegions</option>
+                @foreach (var region in Model.Select(m => m.SubRegionName).Distinct().OrderBy(r => r))
+                {
+                    <option value="@region">@region</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="text-white-50 small fw-bold text-uppercase mb-1 d-block">Filter By Status</label>
+            <select id="statusFilter" class="form-select bg-dark text-white border-secondary">
+                <option value="">All Statuses</option>
+                <option value="Paid">Paid Only</option>
+                <option value="Unpaid">Unpaid Only</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="text-white-50 small fw-bold text-uppercase mb-1 d-block">Sort Balances</label>
+            <select id="debtSorter" class="form-select bg-dark text-white border-secondary">
+                <option value="default">Default</option>
+                <option value="highest">Highest Debt First</option>
+                <option value="lowest">Lowest Debt First</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="table-responsive rounded shadow">
+        <table class="table table-dark table-hover mb-0" id="ownersTable">
+            <thead style="border-bottom: 2px solid #333; background-color:#121212;">
+                <tr>
+                    <th class="text-white-50">Owner ID</th>
+                    <th class="text-white-50">Name</th>
+                    <th class="text-white-50">Account Number</th>
+                    <th class="text-white-50">Contact Details</th>
+                    <th class="text-white-50">Sub-Region</th>
+                    <th class="text-white-50">Arrears Balance</th>
+                    <th class="text-white-50 text-center">Status</th>
+                </tr>
+            </thead>
+            <tbody id="ownersTableBody">
+                @foreach (var owner in Model)
+                {
+                    <tr class="owner-row"
+                        data-name="@owner.OwnerName?.ToLower()"
+                        data-account="@owner.Account_Number?.ToLower()"
+                        data-email="@owner.Email?.ToLower()"
+                        data-phone="@owner.Phone"
+                        data-region="@owner.SubRegionName"
+                        data-balance="@owner.OutstandingBalance"
+                        data-status="@(owner.IsPaid ? "Paid" : "Unpaid")">
+
+                        <td class="fw-bold text-white id-cell">@owner.OwnerId_Number</td>
+                        <td class="text-white name-cell">@owner.OwnerName</td>
+                        <td class="text-info fw-bold account-cell">@owner.Account_Number</td>
+                        <td>
+                            <span class="d-block text-white phone-cell">@owner.Phone</span>
+                            <small class="text-white-50 email-cell">@owner.Email</small>
+                        </td>
+                        <td class="text-white region-cell">@owner.SubRegionName</td>
+                        <td class="balance-cell @(owner.IsPaid ? "text-success" : "text-danger") fw-bold" data-val="@owner.OutstandingBalance">
+                            R @owner.OutstandingBalance.ToString("N2")
+                        </td>
+                        <td class="text-center status-cell">
+                            @if (owner.IsPaid)
+                            {
+                                <span class="badge bg-success px-3 py-2 fw-bold text-uppercase">Paid</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger px-3 py-2 fw-bold text-uppercase">Unpaid</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const searchInput = document.getElementById("tableSearch");
+        const regionFilter = document.getElementById("regionFilter");
+        const statusFilter = document.getElementById("statusFilter");
+        const debtSorter = document.getElementById("debtSorter");
+        const tableBody = document.getElementById("ownersTableBody");
+        const downloadBtn = document.getElementById("downloadFilteredReport");
+
+        function filterAndSortTable() {
+            const searchQuery = searchInput.value.toLowerCase();
+            const selectedRegion = regionFilter.value;
+            const selectedStatus = statusFilter.value;
+            const sortOrder = debtSorter.value;
+
+            let rows = Array.from(tableBody.querySelectorAll(".owner-row"));
+
+            rows.forEach(row => {
+                const textMatch = row.dataset.name.includes(searchQuery) ||
+                    row.dataset.account.includes(searchQuery) ||
+                    row.dataset.email.includes(searchQuery) ||
+                    row.dataset.phone.includes(searchQuery);
+
+                const regionMatch = !selectedRegion || row.dataset.region === selectedRegion;
+                const statusMatch = !selectedStatus || row.dataset.status === selectedStatus;
+
+                if (textMatch && regionMatch && statusMatch) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+
+            if (sortOrder === "highest") {
+                rows.sort((a, b) => parseFloat(b.dataset.balance) - parseFloat(a.dataset.balance));
+            } else if (sortOrder === "lowest") {
+                rows.sort((a, b) => parseFloat(a.dataset.balance) - parseFloat(b.dataset.balance));
+            }
+
+            rows.forEach(row => tableBody.appendChild(row));
+        }
+
+        function downloadCSV() {
+            let csv = [];
+            csv.push("Owner ID,Name,Account Number,Phone,Email,Sub-Region,Outstanding Balance,Status");
+
+            const visibleRows = tableBody.querySelectorAll(".owner-row:not([style*='display: none'])");
+
+            visibleRows.forEach(row => {
+                const id = row.querySelector(".id-cell").textContent.trim();
+                const name = row.querySelector(".name-cell").textContent.trim();
+                const account = row.querySelector(".account-cell").textContent.trim();
+                const phone = row.querySelector(".phone-cell").textContent.trim();
+                const email = row.querySelector(".email-cell").textContent.trim();
+                const region = row.querySelector(".region-cell").textContent.trim();
+                const balance = row.querySelector(".balance-cell").dataset.val;
+                const status = row.querySelector(".status-cell").textContent.trim();
+
+                csv.push(`"${id}","${name}","${account}","${phone}","${email}","${region}","R${parseFloat(balance).toFixed(2)}","${status}"`);
+            });
+
+            const csvContent = "data:text/csv;charset=utf-8," + csv.join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "SmartWater_Filtered_Owners_Report.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        searchInput.addEventListener("input", filterAndSortTable);
+        regionFilter.addEventListener("change", filterAndSortTable);
+        statusFilter.addEventListener("change", filterAndSortTable);
+        debtSorter.addEventListener("change", filterAndSortTable);
+        downloadBtn.addEventListener("click", downloadCSV);
+    });
+</script>

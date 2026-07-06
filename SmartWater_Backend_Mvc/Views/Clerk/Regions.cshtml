@@ -1,0 +1,108 @@
+﻿@using System.Globalization
+@model IEnumerable<SmartWater_Backend_Mvc.Models.Region>
+
+@{
+    ViewData["Title"] = "Regions";
+    Layout = "_ClerkLayout";
+}
+
+<h1 style="color:white; margin:10px; font-size: 24px;">Regions</h1>
+
+<div class="d-flex flex-wrap align-items-center gap-3 m-3 p-3 rounded" style="background-color: #1e1e24; border: 1px solid #333;">
+    <div>
+        <input type="text" id="tableSearch" placeholder="Search Region..." class="form-control"
+               style="background-color: #121212; color: #fff; border: 1px solid #00f0ff; max-width: 250px;" />
+    </div>
+
+    <div class="ms-auto d-flex align-items-center gap-3">
+        <a asp-controller="Clerk" asp-action="AddRegion" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px; padding: 10px 20px; text-decoration: none; display: inline-block; transition: all 0.2s;">
+            Add New Region
+        </a>
+        <button id="downloadBtn" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px; padding: 8px 16px; width:300px;">
+            📥 Download Filtered Regions
+        </button>
+    </div>
+</div>
+
+<div style="height:100vh" class="table-responsive rounded shadow">
+    <table id="reportsTable" style="margin:15px; border-radius:10px;" class="table table-dark table-hover mb-0">
+        <thead style="border-bottom: 2px solid #00f0ff; margin:5px; background-color:#121212;">
+            <tr>
+                <th scope="col" class="text-white-50">Region Name</th>
+                <th scope="col" class="text-white-50">Meter Number</th>
+                <th scope="col" class="text-white-50">Add Sub-Regions</th>
+                <th scope="col" class="text-white-50">Edit</th>
+                <th scope="col" class="text-white-50">Delete</th>
+            </tr>
+        </thead>
+        <tbody id="regionsTableBody">
+            @foreach (var region in Model)
+            {
+                <tr class="region-row"
+                    data-name="@region.Region_Name?.ToLower()"
+                    data-meter="@region.Meter_Number?.ToLower()">
+                    <td class="name-cell text-white">@region.Region_Name</td>
+                    <td class="meter-cell text-white">@region.Meter_Number</td>
+                    <td><a asp-action="AddSubRegion" asp-route-id="@region.Region_Id" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px; padding: 10px 20px; text-decoration: none; display: inline-block; transition: all 0.2s;">Add Sub-Regions</a></td>
+                    <td><a asp-action="EditRegion" asp-route-id="@region.Region_Id" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px; padding: 10px 20px; text-decoration: none; display: inline-block; transition: all 0.2s;">Edit</a></td>
+                    <td><a asp-action="DeleteRegion" asp-route-id="@region.Region_Id" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px; padding: 10px 20px; text-decoration: none; display: inline-block; transition: all 0.2s;">Delete</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const searchInput = document.getElementById("tableSearch");
+        const tableBody = document.getElementById("regionsTableBody");
+        const downloadBtn = document.getElementById("downloadBtn");
+
+        function filterTable() {
+            const searchQuery = searchInput.value.toLowerCase().trim();
+            const rows = tableBody.querySelectorAll(".region-row");
+
+            rows.forEach(row => {
+                const nameAttr = row.dataset.name || "";
+                const meterAttr = row.dataset.meter || "";
+
+                const textMatch = !searchQuery ||
+                    nameAttr.includes(searchQuery) ||
+                    meterAttr.includes(searchQuery);
+
+                if (textMatch) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        }
+
+        function downloadCSV() {
+            let csv = [];
+            csv.push("Region Name,Meter Number");
+
+            const visibleRows = Array.from(tableBody.querySelectorAll(".region-row")).filter(row => row.style.display !== "none");
+
+            visibleRows.forEach(row => {
+                const name = row.querySelector(".name-cell").textContent.trim();
+                const meter = row.querySelector(".meter-cell").textContent.trim();
+
+                csv.push(`"${name}","${meter}"`);
+            });
+
+            const csvContent = "\uFEFF" + csv.join("\n");
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const link = document.createElement("a");
+
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", "SmartWater_Regions_Report.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        searchInput.addEventListener("input", filterTable);
+        downloadBtn.addEventListener("click", downloadCSV);
+    });
+</script>

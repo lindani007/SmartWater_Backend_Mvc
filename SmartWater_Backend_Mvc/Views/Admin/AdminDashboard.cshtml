@@ -1,0 +1,344 @@
+﻿@model IEnumerable<SmartWater_Backend_Mvc.Models.RegionConsumption>
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    Layout = "_FinanceLayout";
+
+    double totalWaterSent = Model.Sum(x => x.Water_Sent);
+    double totalWaterUsed = Model.Sum(x => x.Water_Used);
+    double totalWaterOutstanding = Model.Sum(x => x.Water_Thats_OutStanding);
+    double avgLeakageProb = Model.Any() ? Model.Average(x => x.Leakage_Propability) : 0;
+    double totalExpectedRevenue = Model.Sum(x => x.Expected_Cost);
+    double totalActualLostRevenue = Model.Sum(x => x.OutStanding_Cost);
+}
+
+<div class="d-flex flex-wrap gap-3 m-3 p-3 rounded align-items-center" style="background-color: #1e1e24; border: 1px solid #333;">
+    <div class="me-auto">
+        <h2 class="text-white my-0 fw-bold d-flex align-items-center gap-2">
+            ⚡ Admin Portal <span class="badge bg-secondary fs-7 fw-normal" style="background-color: #2a2a30 !important; color: #00f0ff !important; border: 1px solid #00f0ff;">@Model.Count() Regions Monitored</span>
+        </h2>
+    </div>
+
+    <div class="d-flex gap-2">
+        <a asp-controller="Finance" asp-action="FinanceView" class="btn fw-bold px-4 shadow-sm" style="background-color: #121212; color: #00f0ff; border: 1px solid #00f0ff; border-radius: 8px; transition: all 0.2s;">
+            📁 Finance Portal
+        </a>
+        <a asp-controller="Engineer" asp-action="Regions" class="btn fw-bold px-4 shadow-sm" style="background-color: #121212; color: #00f0ff; border: 1px solid #00f0ff; border-radius: 8px; transition: all 0.2s;">
+            🛠️ Engineering Portal
+        </a>
+    </div>
+
+    <div style="width: 2px; height: 30px; background-color: #333;" class="mx-1 d-none d-md-block"></div>
+
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-controller="Finance" asp-action="FinanceView" class="btn fw-bold px-4 shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px;">
+            ✨ Ai Summary
+        </a>
+        <a asp-controller="Admin" asp-action="Employees" class="btn fw-bold px-4 shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px;">
+            ➕ Add Employee
+        </a>
+        <a asp-controller="Admin" asp-action="Owners" class="btn btn-outline-danger fw-bold px-4 shadow-sm" style="border-radius: 8px; border-color: #ff3366; color: #ff3366;">
+            🚨 Review Outstanding Accounts
+        </a>
+    </div>
+</div>
+
+<div class="row g-3 mx-2 mb-4">
+    <div class="col-md-3">
+        <div class="p-3 rounded shadow-sm position-relative overflow-hidden" style="background-color: #1e1e24; border-left: 5px solid #00f0ff; border-top: 1px solid #333; border-right: 1px solid #333; border-bottom: 1px solid #333;">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <small class="text-white-50 text-uppercase d-block fw-bold mb-1" style="letter-spacing: 0.5px;">Water Distributed</small>
+                    <h3 class="text-white fw-bold mb-0 mt-2" id="totalWaterSenth3">@totalWaterSent.ToString("F2") <span class="fs-6 text-info fw-normal">kl</span></h3>
+                </div>
+                <span class="fs-4" style="color: rgba(0, 240, 255, 0.2);">💧</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="p-3 rounded shadow-sm position-relative overflow-hidden" style="background-color: #1e1e24; border-left: 5px solid #28a745; border-top: 1px solid #333; border-right: 1px solid #333; border-bottom: 1px solid #333;">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <small class="text-white-50 text-uppercase d-block fw-bold mb-1" style="letter-spacing: 0.5px;">Expected Revenue</small>
+                    <h3 class="text-success fw-bold mb-0 mt-2" id="totalExpectedRevenueh3">R @totalExpectedRevenue.ToString("N2")</h3>
+                </div>
+                <span class="fs-4" style="color: rgba(40, 167, 69, 0.2);">💵</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="p-3 rounded shadow-sm position-relative overflow-hidden" style="background-color: #1e1e24; border-left: 5px solid #ff3366; border-top: 1px solid #333; border-right: 1px solid #333; border-bottom: 1px solid #333;">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <small class="text-white-50 text-uppercase d-block fw-bold mb-1" style="letter-spacing: 0.5px;">Actual Lost Revenue</small>
+                    <h3 class="text-danger fw-bold mb-0 mt-2" id="totalActualLostRevenueh3">R @totalActualLostRevenue.ToString("N2")</h3>
+                </div>
+                <span class="fs-4" style="color: rgba(255, 51, 102, 0.2);">📉</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="p-3 rounded shadow-sm position-relative overflow-hidden" style="background-color: #1e1e24; border-left: 5px solid #ffc107; border-top: 1px solid #333; border-right: 1px solid #333; border-bottom: 1px solid #333;">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <small class="text-white-50 text-uppercase d-block fw-bold mb-1" style="letter-spacing: 0.5px;">Average Leak Threat</small>
+                    <h3 class="text-warning fw-bold mb-0 mt-2" id="avgLeakageProbh3">@avgLeakageProb.ToString("F2")%</h3>
+                </div>
+                <span class="fs-4" style="color: rgba(255, 193, 7, 0.2);">⚠️</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mx-2 mb-5">
+    <div class="col-lg-8 col-md-12">
+        <div class="p-4 rounded shadow-sm" style="background-color: #1e1e24; border: 1px solid #333;">
+            <h5 class="text-white mb-3 fw-bold">Regional Distribution & Leak Variance Analysis</h5>
+            <div style="position: relative; height: 350px;">
+                <canvas id="regionalDoubleBarChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-12">
+        <div class="p-4 rounded h-100 shadow-sm" style="background-color: #1e1e24; border: 1px solid #333;">
+            <h5 class="text-white mb-3 fw-bold">🚨 High Risk Regions</h5>
+            <div id="topLeakRegions" class="list-group list-group-flush bg-transparent">
+                @foreach (var region in Model.OrderByDescending(x => x.Leakage_Propability).Take(4))
+                {
+                    double oustanding = region.Water_Sent - region.Water_Used;
+                    <div class="list-group-item bg-transparent text-white px-0 py-3 border-secondary d-flex justify-content-between align-items-center" style="border-bottom: 1px solid #2a2a30 !important;">
+                        <div>
+                            <span class="d-block fw-bold text-white fs-6">@region.Region_Name</span>
+                            <small class="text-white-50">Unaccounted Loss: <strong class="text-info">@region.Water_Thats_OutStanding.ToString("F2") kl</strong></small>
+                        </div>
+                        <span class="badge rounded-pill fw-bold px-3 py-2" style="background-color: rgba(255, 51, 102, 0.15); color: #ff3366; border: 1px solid #ff3366;">
+                            @region.Leakage_Propability.ToString("F1")% Leak
+                        </span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    Chart.defaults.color = "#aaa";
+    Chart.defaults.borderColor = "#2a2a30";
+
+    const ctx = document.getElementById("regionalDoubleBarChart").getContext("2d");
+
+    const cyanGradient = ctx.createLinearGradient(0, 0, 0, 350);
+    cyanGradient.addColorStop(0, "#00f0ff");
+    cyanGradient.addColorStop(1, "rgba(0,240,255,.15)");
+
+    const pinkGradient = ctx.createLinearGradient(0, 0, 0, 350);
+    pinkGradient.addColorStop(0, "#ff3366");
+    pinkGradient.addColorStop(1, "rgba(255,51,102,.15)");
+
+    let leakProbabilities = [];
+
+    const regionalChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: "Water Supplied (kl)",
+                    data: [],
+                    backgroundColor: cyanGradient,
+                    borderColor: "#00f0ff",
+                    borderWidth: 1,
+                    borderRadius: 6
+                },
+                {
+                    label: "Water Outstanding/Lost (kl)",
+                    data: [],
+                    backgroundColor: pinkGradient,
+                    borderColor: "#ff3366",
+                    borderWidth: 1,
+                    borderRadius: 6
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: "top",
+                    align: "end"
+                },
+                tooltip: {
+                    callbacks: {
+                        footer: function (items) {
+                            const i = items[0].dataIndex;
+                            return "Leak Probability: " + leakProbabilities[i].toFixed(2) + "%";
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: "Volume (kl)"
+                    }
+                }
+            }
+        }
+    });
+
+    async function loadDashboard() {
+
+        try {
+
+            const response = await fetch("https://localhost:7203/api/RegionConsumptions");
+
+            if (!response.ok)
+                throw new Error("Failed to load dashboard.");
+
+            const regions = await response.json();
+
+            console.log(regions);
+
+            // ==========================
+            // Cards
+            // ==========================
+
+            const totalWaterSent =
+                regions.reduce((sum, x) => sum + Number(x.water_Sent ?? 0), 0);
+
+            const totalExpectedRevenue =
+                regions.reduce((sum, x) => sum + Number(x.extepected_Amount ?? 0), 0);
+
+            const totalActualLostRevenue =
+                regions.reduce((sum, x) => sum + Number(x.outStanding_Amount ?? 0), 0);
+
+            const avgLeakageProb =
+                regions.length > 0
+                    ? regions.reduce((sum, x) => sum + Number(x.leakage_Percent ?? 0), 0) / regions.length
+                    : 0;
+
+            document.getElementById("totalWaterSenth3").innerHTML =
+                totalWaterSent.toFixed(2) +
+                ' <span class="fs-6 text-info fw-normal">kl</span>';
+
+            document.getElementById("totalExpectedRevenueh3").innerText =
+                "R " + totalExpectedRevenue.toLocaleString("en-ZA", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+
+            document.getElementById("totalActualLostRevenueh3").innerText =
+                "R " + totalActualLostRevenue.toLocaleString("en-ZA", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+
+            document.getElementById("avgLeakageProbh3").innerText =
+                avgLeakageProb.toFixed(2) + "%";
+
+            // ==========================
+            // High Risk Regions
+            // ==========================
+
+            const topRegions = [...regions]
+                .sort((a, b) => b.leakage_Percent - a.leakage_Percent)
+                .slice(0, 4);
+
+            let html = "";
+
+            topRegions.forEach(region => {
+
+                html += `
+<div class="list-group-item bg-transparent text-white px-0 py-3 border-secondary d-flex justify-content-between align-items-center"
+     style="border-bottom:1px solid #2a2a30 !important;">
+
+    <div>
+        <span class="d-block fw-bold text-white fs-6">
+            ${region.region_Name}
+        </span>
+
+        <small class="text-white-50">
+            Unaccounted Loss:
+            <strong class="text-info">
+                ${Number(region.outstandingWater).toFixed(2)} kl
+            </strong>
+        </small>
+    </div>
+
+    <span class="badge rounded-pill fw-bold px-3 py-2"
+          style="background-color:rgba(255,51,102,.15);color:#ff3366;border:1px solid #ff3366;">
+        ${Number(region.leakage_Percent).toFixed(1)}% Leak
+    </span>
+
+</div>`;
+            });
+
+            console.log(html);
+
+            document.getElementById("topLeakRegions").innerHTML = html;
+
+            // ==========================
+            // Chart
+            // ==========================
+
+            leakProbabilities =
+                regions.map(x => Number(x.leakage_Percent));
+
+            regionalChart.data.labels =
+                regions.map(x => x.region_Name);
+
+            regionalChart.data.datasets[0].data =
+                regions.map(x => Number(x.water_Sent));
+
+            regionalChart.data.datasets[1].data =
+                regions.map(x => Number(x.outstandingWater));
+
+            regionalChart.update();
+
+        }
+        catch (err) {
+            console.error(err);
+        }
+    }
+
+    // Initial load
+    loadDashboard();
+
+    // ==========================
+    // SignalR
+    // ==========================
+
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("https://localhost:7203/dashboardHub")
+        .configureLogging(signalR.LogLevel.Information)
+        .build();
+
+    connection.on("ReceiveData", function (update) {
+
+        if (update) {
+            console.log("Dashboard Update Received");
+            loadDashboard();
+        }
+
+    });
+
+    connection.start()
+        .then(() => console.log("SignalR Connected"))
+        .catch(err => console.error(err));
+
+});
+</script>

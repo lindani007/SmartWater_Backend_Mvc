@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SmartWater_Citizen_Maui.Views.AddAplienceView"
+             xmlns:vm="clr-namespace:SmartWater_Citizen_Maui.ViewModels"
+             Title="Add Appliance" x:DataType="vm:ApplienceViewModel" BackgroundColor="#121212">
+    <ScrollView>
+        <StackLayout Padding="15" Margin="10" Spacing="10">
+            <Label Text="Welcome to Smart Water Consumption" TextColor="White" FontAttributes="Bold" FontSize="{OnPlatform Android='18', iOS='18', Default='26'}" HorizontalOptions="Start" VerticalOptions="Start"/>
+            <Label Text="Please add your house applience that uses water." TextColor="White" FontSize="15" HorizontalOptions="Start" VerticalOptions="Start"/>
+            <Border HorizontalOptions="Center" Stroke="#05faeb">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="15"/>
+                </Border.StrokeShape>
+                <StackLayout HorizontalOptions="Center" VerticalOptions="Center" WidthRequest="{OnPlatform Android='300',iOS='300', Default='500'}">
+                    <Border HorizontalOptions="Center" Margin="10" StrokeThickness="0">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="15"/>
+                        </Border.StrokeShape>
+                    </Border>
+                    <StackLayout Spacing="10" Padding="10">
+                        <HorizontalStackLayout Margin="10" HorizontalOptions="Center">
+                            <Label Text="Applience Name" VerticalOptions="Center" TextColor="White" WidthRequest="{OnPlatform Android='90', iOS='90', Default='170'}" FontSize="{OnPlatform Android='11', iOS='11', Default='20'}"/>
+                            <Border>
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="15"/>
+                                </Border.StrokeShape>
+                                <Entry Text="{Binding ApplienceName}" TextColor="White" Placeholder="Applience Name" WidthRequest="{OnPlatform Android='170', iOS='170', Default='270'}" HorizontalTextAlignment="Center"/>
+                            </Border>
+                        </HorizontalStackLayout>
+                        <HorizontalStackLayout Margin="10" HorizontalOptions="Center">
+                            <Label Text="Meter Number" VerticalOptions="Center" TextColor="White" WidthRequest="{OnPlatform Android='90', iOS='90', Default='170'}" FontSize="{OnPlatform Android='11', iOS='11', Default='20'}"/>
+                            <Border>
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="15"/>
+                                </Border.StrokeShape>
+                                <Entry TextColor="White" Text="{Binding MeterNumber}" Placeholder="Meter Number" WidthRequest="{OnPlatform Android='170', iOS='170', Default='270'}" HorizontalTextAlignment="Center"/>
+                            </Border>
+                        </HorizontalStackLayout>
+                        <HorizontalStackLayout Margin="10" HorizontalOptions="Center">
+                            <Label Text="People Using It" VerticalOptions="Center" TextColor="White" WidthRequest="{OnPlatform Android='90', iOS='90', Default='170'}" FontSize="{OnPlatform Android='11', iOS='11', Default='20'}"/>
+                            <Border>
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="15"/>
+                                </Border.StrokeShape>
+                                <Entry TextColor="White" Text="{Binding PeopleUsingIt}" Placeholder="Number of People Using It" WidthRequest="{OnPlatform Android='170', iOS='170', Default='270'}" HorizontalTextAlignment="Center"/>
+                            </Border>
+                        </HorizontalStackLayout>
+                        <HorizontalStackLayout Padding="15" BackgroundColor="#2b2929"  HorizontalOptions="Center" Spacing="10">
+                            <Border>
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="15"/>
+                                </Border.StrokeShape>
+                                <Button Text="Add" WidthRequest="120" BackgroundColor="#05faeb" Command="{Binding AddClickedCommand}"/>
+                            </Border>
+                            <Border>
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="15"/>
+                                </Border.StrokeShape>
+                                <Button Text="Done" WidthRequest="120" BackgroundColor="#05faeb" Command="{Binding  DoneClickedCommand}"/>
+                            </Border>
+                        </HorizontalStackLayout>
+                    </StackLayout>
+                </StackLayout>
+            </Border>
+
+        </StackLayout>
+    </ScrollView>
+</ContentPage>

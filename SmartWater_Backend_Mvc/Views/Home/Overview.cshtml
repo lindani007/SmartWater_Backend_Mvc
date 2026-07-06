@@ -1,0 +1,75 @@
+@model IEnumerable<dynamic>
+@{
+    ViewData["Title"] = "Municipal Overview";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Total KiloLiters Sent</h5>
+                    <p class="card-text">@Model?.FirstOrDefault()?.totalKiloliters ?? "-"</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Total Expected Revenue</h5>
+                    <p class="card-text">@Model?.FirstOrDefault()?.expectedRevenue ?? "-"</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Actual Revenue Collected</h5>
+                    <p class="card-text">@Model?.FirstOrDefault()?.actualRevenue ?? "-"</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-danger mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Outstanding Balance</h5>
+                    <p class="card-text">@Model?.FirstOrDefault()?.outstandingBalance ?? "-"</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <table class="table table-striped table-responsive">
+                <thead>
+                    <tr>
+                        <th>Region Name</th>
+                        <th>Water Dispatched</th>
+                        <th>Expected Cost</th>
+                        <th>Cost Paid</th>
+                        <th>Outstanding Cost</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="regionTableBody">
+                    @if (Model != null)
+                    {
+                        foreach (var r in Model)
+                        {
+                            <tr>
+                                <td>@r.regionName</td>
+                                <td>@r.waterDispatched</td>
+                                <td>@r.expectedCost</td>
+                                <td>@r.costPaid</td>
+                                <td>@r.outstandingCost</td>
+                                <td><span class="badge badge-pill badge-@(r.status?.ToString().ToLower() ?? "secondary")">@r.status</span></td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

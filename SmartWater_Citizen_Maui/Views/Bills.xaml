@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:SmartWater_Citizen_Maui.ViewModels"
+             xmlns:models="clr-namespace:SmartWater_Citizen_Maui.ViewModels"
+             x:Class="SmartWater_Citizen_Maui.Views.Bills"
+             Title="Bills" 
+             BackgroundColor="Black"
+             x:DataType="viewmodels:BillsViewModel">
+    <ScrollView>
+        <VerticalStackLayout Padding="15" Spacing="20">
+
+            <Border Padding="15" BackgroundColor="#111" StrokeThickness="1" Stroke="#29ede7">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="10"/>
+                </Border.StrokeShape>
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="ACCOUNT STATEMENT" FontAttributes="Bold" TextColor="#29ede7" FontSize="16"/>
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8">
+                        <Label Grid.Row="0" Grid.Column="0" Text="Previous Balance:" TextColor="White"/>
+                        <Label Grid.Row="0" Grid.Column="1" Text="{Binding PrevBalance, StringFormat='R{0:F2}'}" TextColor="White" HorizontalOptions="End"/>
+
+                        <Label Grid.Row="1" Grid.Column="0" Text="Account Number:" TextColor="White"/>
+                        <Label Grid.Row="1" Grid.Column="1" Text="{Binding PaymentsReceived}" TextColor="White" HorizontalOptions="End"/>
+
+                        <Label Grid.Row="2" Grid.Column="0" Text="New Water Charges:" TextColor="White"/>
+                        <Label Grid.Row="2" Grid.Column="1" Text="{Binding CurrentWaterCharges, StringFormat='R{0:F2}'}" TextColor="White" HorizontalOptions="End"/>
+
+                        <BoxView Grid.Row="3" Grid.ColumnSpan="2" HeightRequest="1" Color="Gray" Margin="0,5"/>
+                    </Grid>
+
+                    <HorizontalStackLayout Spacing="10" Margin="0,5,0,0">
+                        <VerticalStackLayout>
+                            <Label Text="TOTAL AMOUNT DUE:" TextColor="White" FontAttributes="Bold"/>
+                            <HorizontalStackLayout Spacing="3">
+                                <Label Text="Due Date:" TextColor="Gray" FontSize="12"/>
+                                <Label Text="{Binding PaymentDueDate}" TextColor="Gray" FontSize="12"/>
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+                        <Label Text="{Binding TotalDue, StringFormat='R{0:F2}'}" TextColor="#29ede7" FontSize="26" FontAttributes="Bold"/>
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <Button Text="PAY VIA CARD / EFT" 
+                    BackgroundColor="#29ede7" 
+                    TextColor="Black" 
+                    FontAttributes="Bold" 
+                    HeightRequest="50" 
+                    CornerRadius="10" Command="{Binding PayClickedCommand}"/>
+
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Statement History" TextColor="White" FontSize="18" FontAttributes="Bold"/>
+
+                <Grid BackgroundColor="#29ede7" Padding="10,8" ColumnDefinitions="2*,1.5*,1.5*,2*">
+                    <Label Grid.Column="0" Text="Month" TextColor="Black" FontAttributes="Bold" VerticalOptions="Center"/>
+                    <Label Grid.Column="1" Text="Liters" TextColor="Black" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center"/>
+                    <Label Grid.Column="2" Text="Amount" TextColor="Black" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center"/>
+                    <Label Grid.Column="3" Text="My History" TextColor="Black" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center"/>
+                </Grid>
+
+                <CollectionView ItemsSource="{Binding PastBills}" SelectionMode="None">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="models:BillingHistorySummary">
+                            <Grid Padding="10,12" ColumnDefinitions="2*,1.5*,1.5*,2*" BackgroundColor="#111" >
+                                <Label Grid.Column="0" Text="{Binding Billing_Month}" TextColor="White" VerticalOptions="Center"/>
+                                <Label Grid.Column="1" Text="{Binding Total_Water_Liters, StringFormat='{0:N1} L'}" TextColor="White" HorizontalOptions="Center" VerticalOptions="Center"/>
+                                <Label Grid.Column="2" Text="{Binding Total_Cost_Rands, StringFormat='R{0:F2}'}" TextColor="White" HorizontalOptions="Center" VerticalOptions="Center"/>
+                                <Button Grid.Column="3" 
+                                        Text="My History" 
+                                        FontSize="11"
+                                        Padding="2"
+                                        HeightRequest="30"
+                                        BackgroundColor="#222" 
+                                        TextColor="#29ede7"
+                                        BorderColor="#29ede7"
+                                        BorderWidth="1"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:BillsViewModel}}, Path=ViewHistoryDetailsCommand}"
+                                        CommandParameter="{Binding .}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </VerticalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

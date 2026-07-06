@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:SmartWater_Citizen_Maui.ViewModels"
+             x:Class="SmartWater_Citizen_Maui.Views.Login"
+             Title="Login" x:DataType="vm:LoginViewModel" BackgroundColor="#121212" NavigationPage.HasBackButton="False">
+    <ScrollView>
+        <StackLayout Padding="15" Margin="10" Spacing="10">
+            <Label Text="Welcome" TextColor="White" FontAttributes="Bold" FontSize="{OnPlatform Android='18', iOS='18', Default='26'}" HorizontalOptions="Start" VerticalOptions="Start"/>
+            <Label Text="This is the smart water consumption app." TextColor="White" FontSize="15" HorizontalOptions="Start" VerticalOptions="Start"/>
+            <Border HorizontalOptions="Center" Stroke="#05faeb" >
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="15"/>
+                </Border.StrokeShape>
+                <StackLayout HorizontalOptions="Center" VerticalOptions="Center" WidthRequest="{OnPlatform Android='300',iOS='300', Default='500'}">
+                    <Border HorizontalOptions="Center" Margin="10" StrokeThickness="0">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="15"/>
+                        </Border.StrokeShape>
+
+                        <HorizontalStackLayout Padding="15" BackgroundColor="#2b2929"  HorizontalOptions="Center" Spacing="10">
+                            <Border>
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="15"/>
+                                </Border.StrokeShape>
+                                <Button Text="Login" WidthRequest="120" BackgroundColor="#05faeb" Command="{Binding GoToLoginClickedCommand}"/>
+                            </Border>
+                            <Border>
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="15"/>
+                                </Border.StrokeShape>
+                                <Button Text="Register" WidthRequest="120" BackgroundColor="#05faeb" Command="{Binding GoToRegisterClickedCommand}"/>
+                            </Border>
+                        </HorizontalStackLayout>
+                    </Border>
+                    <Grid x:Name="LoginSection" IsVisible="{Binding IsLoginCanBeVisble}">
+                        <StackLayout Spacing="10" Padding="10">
+                            <HorizontalStackLayout Margin="10" HorizontalOptions="Center">
+                                <Label Text="Account Number" VerticalOptions="Center" TextColor="White" WidthRequest="{OnPlatform Android='90', iOS='90', Default='170'}" FontSize="{OnPlatform Android='11', iOS='11', Default='20'}"/>
+                                <Border>
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="15"/>
+                                    </Border.StrokeShape>
+                                    <Entry TextColor="White" Text="{Binding AccountNumber}" Placeholder="Account Number" WidthRequest="{OnPlatform Android='170', iOS='170', Default='270'}" HorizontalTextAlignment="Center"/>
+                                </Border>
+                            </HorizontalStackLayout>
+                            <HorizontalStackLayout Margin="10" HorizontalOptions="Center">
+                                        <Label Text="Password" 
+                                   VerticalOptions="Center" 
+                                   TextColor="White" 
+                                   WidthRequest="{OnPlatform Android='90', iOS='90', Default='170'}" 
+                                   FontSize="{OnPlatform Android='11', iOS='11', Default='20'}"/>
+
+                                <Border BackgroundColor="#121A24" StrokeThickness="1">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="15"/>
+                                    </Border.StrokeShape>
+
+                                    <Grid ColumnDefinitions="*, Auto" BackgroundColor="#121212"
+                                      WidthRequest="{OnPlatform Android='170', iOS='170', Default='270'}"
+                                      Padding="10,0">
+
+                                        <Label Grid.Column="1" 
+                                           Text="🔒" 
+                                           FontSize="14" 
+                                           VerticalOptions="Center" 
+                                           Margin="5,0,8,0">
+                                            <Label.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="ShowPasswordTapped"/>
+                                            </Label.GestureRecognizers>
+                                        </Label>           
+
+                                        <Entry Grid.Column="0" x:Name="paswordEntry"
+                                           Text="{Binding Password}" 
+                                           TextColor="White" 
+                                           IsPassword="True" 
+                                           Placeholder="Password" 
+                                           HorizontalTextAlignment="Center"
+                                           VerticalOptions="Center"
+                                           BackgroundColor="Transparent"/>
+                                    </Grid>
+                                </Border>
+                            </HorizontalStackLayout>
+                            <Label TextColor="Blue" Text="Forgot Password?" HorizontalOptions="Center">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="ForgotPassword_Tapped"/>
+                                </Label.GestureRecognizers>
+                            </Label>
+                            <Border WidthRequest="120">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="15"/>
+                                </Border.StrokeShape>
+                                <Button IsEnabled="{Binding IsLoginButtonCanBeVisble}" Text="Login" Command="{Binding LoginClickedCommand}" WidthRequest="120" BackgroundColor="#05faeb" />
+                            </Border>
+                            <StackLayout HorizontalOptions="Center" Padding="10" Margin="10">
+                                <ActivityIndicator IsRunning="{Binding IsVerifying}" IsVisible="{Binding IsIndicatorCanBeVisble}" Color="SeaGreen"/>
+                                <Label Text="Verifying Credentials..." IsVisible="{Binding IsLabelCanBeVisble}" HorizontalOptions="Center"/>
+                            </StackLayout>
+                        </StackLayout>
+                    </Grid>
+                    <Grid x:Name="RegisterSection" IsVisible="{Binding IsRegisterCanBeVisble}">
+                        <StackLayout Spacing="10" Padding="10">
+                            <HorizontalStackLayout Margin="10" HorizontalOptions="Center">
+                                <Label Text="Account Number" VerticalOptions="Center" TextColor="White" WidthRequest="{OnPlatform Android='90', iOS='90', Default='170'}" FontSize="{OnPlatform Android='11', iOS='11', Default='20'}"/>
+                                <Border>
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="15"/>
+                                    </Border.StrokeShape>
+                                    <Entry Text="{Binding AccountNumber}" TextColor="White" Placeholder="Account Number" WidthRequest="{OnPlatform Android='170', iOS='170', Default='270'}" HorizontalTextAlignment="Center"/>
+                                </Border>
+                            </HorizontalStackLayout>
+                            <HorizontalStackLayout Margin="10" HorizontalOptions="Center">
+                                <Label Text="Email" TextColor="White" WidthRequest="{OnPlatform Android='90', iOS='90', Default='170'}" FontSize="{OnPlatform Android='11', iOS='11', Default='20'}"/>
+                                <Border>
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="15"/>
+                                    </Border.StrokeShape>
+                                    <Entry Text="{Binding Email}" VerticalOptions="Center" TextColor="White" Placeholder="Email" WidthRequest="{OnPlatform Android='170', iOS='170', Default='270'}" HorizontalTextAlignment="Center"/>
+                                </Border>
+                            </HorizontalStackLayout>
+                            <HorizontalStackLayout Margin="10" HorizontalOptions="Center">
+                                <Label Text="Password" 
+                                     VerticalOptions="Center" 
+                                     TextColor="White" 
+                                     WidthRequest="{OnPlatform Android='90', iOS='90', Default='170'}" 
+                                     FontSize="{OnPlatform Android='11', iOS='11', Default='20'}"/>
+
+                                <Border BackgroundColor="#121A24" StrokeThickness="1">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="15"/>
+                                    </Border.StrokeShape>
+
+                                    <Grid ColumnDefinitions="*, Auto" BackgroundColor="#121212"
+                                            WidthRequest="{OnPlatform Android='170', iOS='170', Default='270'}"
+                                            Padding="10,0">
+
+                                        <Label Grid.Column="1" 
+                                             Text="🔒" 
+                                             FontSize="14" 
+                                             VerticalOptions="Center" 
+                                             Margin="5,0,8,0">
+                                            <Label.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="ShowPasswordTapped"/>
+                                            </Label.GestureRecognizers>
+                                        </Label>
+
+                                        <Entry Grid.Column="0" x:Name="pasword2Entry"
+                                             Text="{Binding Password}" 
+                                             TextColor="White" 
+                                             IsPassword="True" 
+                                             Placeholder="Password" 
+                                             HorizontalTextAlignment="Center"
+                                             VerticalOptions="Center"
+                                             BackgroundColor="Transparent"/>
+                                    </Grid>
+                                </Border>
+                            </HorizontalStackLayout>
+                            <Border WidthRequest="120">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="15"/>
+                                </Border.StrokeShape>
+                                <Button Text="Register" IsEnabled="{Binding IsLoginButtonCanBeVisble}" Command="{Binding RegisterClickedCommand}" WidthRequest="120" BackgroundColor="#05faeb" />
+                            </Border>
+                            <StackLayout HorizontalOptions="Center" Padding="10" Margin="10">
+                                <ActivityIndicator IsRunning="{Binding IsVerifying}" IsVisible="{Binding IsIndicatorCanBeVisble}" Color="SeaGreen"/>
+                                <Label Text="Verifying Credentials..." IsVisible="{Binding IsLabelCanBeVisble}" HorizontalOptions="Center"/>
+                            </StackLayout>
+                        </StackLayout>
+                    </Grid>
+                </StackLayout>
+            </Border>
+            
+        </StackLayout>
+    </ScrollView>
+</ContentPage>

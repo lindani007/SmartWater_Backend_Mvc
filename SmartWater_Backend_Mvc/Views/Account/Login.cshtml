@@ -1,0 +1,32 @@
+﻿@model SmartWater_Backend_Mvc.Models.Login
+
+@{
+    ViewData["Title"] = "Login";
+    Layout = "_AccountLayout";
+}
+
+<form asp-action="Login" method="post">
+    
+    <div class="my-container">
+        <div class="my-form">
+            <div class="my-form-header">
+                    <h1 class="my-anime">W</h1>
+                    <h2 class="my-anime">elcome</h2>
+                    <h1 class="my-anime">B</h1>
+                    <h2 class="my-anime">ack</h2>
+            </div>
+            <div class="my-inputs-div">
+                <label>Stuff Id</label>
+                <input asp-for="Stuff_Id" placeholder="Stuff Id" type="text"/>
+            </div>
+            <div class="my-inputs-div">
+                <label>Password</label>
+                <input type="password" asp-for="Password" placeholder="Password" />
+            </div>
+            <a asp-action="ForgotPassword" class="my-anime">Forgot password?</a>
+            <button type="submit">Sign In</button>
+            <span style="color:white">@ViewData["Message"]</span>
+        </div>
+    </div>
+</form>
+

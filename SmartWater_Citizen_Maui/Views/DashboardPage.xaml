@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:SmartWater_Citizen_Maui.ViewModels"
+             x:Class="SmartWater_Citizen_Maui.Views.DashboardPage"
+             xmlns:vm="clr-namespace:SmartWater_Citizen_Maui.Models"
+             Title="Dashboard" BackgroundColor="#121212" NavigationPage.HasBackButton="False"  x:DataType="viewmodels:DashboardViewModel">
+    <ScrollView>
+        <VerticalStackLayout Padding="12" Spacing="12">
+            <StackLayout Orientation="Horizontal" HorizontalOptions="Center">
+                <Border Padding="12" Margin="4"  WidthRequest="130" HeightRequest="100" BackgroundColor="#29ede7">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="10"/>
+                    </Border.StrokeShape>
+                    <Border.Shadow>
+                        <Shadow Opacity="10" Brush="Black" Offset="5,5" Radius="8"/>
+                    </Border.Shadow>
+                    <VerticalStackLayout Padding="10">
+                        <Label Text="Current Water Used" TextColor="Black" FontAttributes="Bold" />
+                        <Label Text="{Binding CurrentWaterUsed, StringFormat='{0.00:N0} L'}" TextColor="Black" FontSize="24" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border Padding="12" Margin="4" WidthRequest="130" HeightRequest="100" BackgroundColor="#29ede7">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="10"/>
+                    </Border.StrokeShape>
+                    <Border.Shadow>
+                        <Shadow Opacity="10" Brush="Black" Offset="5,5" Radius="8"/>
+                    </Border.Shadow>
+                    <VerticalStackLayout Padding="10">
+                        <Label Text="Balance to Settle" FontAttributes="Bold" TextColor="Black"/>
+                        <Label Text="{Binding BalanceToSettled, StringFormat='R{0.00:00}'}" FontSize="24" TextColor="Black"/>
+                    </VerticalStackLayout>
+                </Border>
+            </StackLayout>
+            <StackLayout HeightRequest="350">
+                <CollectionView ItemsSource="{Binding ApplienceCosumptions}" SelectionMode="None">
+                    <CollectionView.Header>
+                        <Grid BackgroundColor="#29ede7" Padding="10,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="1.5*" />
+                                <ColumnDefinition Width="1.5*" />
+                                <ColumnDefinition Width="1*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Label Grid.Column="0" TextColor="Black" Text="Appliance" FontAttributes="Bold" VerticalOptions="Center" />
+                            <Label Grid.Column="1" TextColor="Black" Text="Used Water (L)" FontAttributes="Bold" VerticalOptions="Center" HorizontalOptions="Center" />
+                            <Label Grid.Column="2" TextColor="Black" Text="Running Cost (R)" FontAttributes="Bold" VerticalOptions="Center" HorizontalOptions="Center" />
+                            <Label Grid.Column="3" TextColor="Black" Text="Status" FontAttributes="Bold" VerticalOptions="Center" HorizontalOptions="Center" />
+                        </Grid>
+                    </CollectionView.Header>
+
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ApplienceCosumption">
+                            <Grid Padding="10,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*" />
+                                    <ColumnDefinition Width="1.5*" />
+                                    <ColumnDefinition Width="1.5*" />
+                                    <ColumnDefinition Width="1*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <Label Grid.Column="0" TextColor="White" Grid.Row="0" Text="{Binding Appliance_Name}" VerticalOptions="Center"/>
+                                <Label Grid.Column="1" TextColor="White" Grid.Row="0" Text="{Binding Applience_Water_Consumed, StringFormat='{0:N1} L'}" VerticalOptions="Center" HorizontalOptions="Center" />
+                                <Label Grid.Column="2" TextColor="White" Grid.Row="0" Text="{Binding Applience_Amount_Spent, StringFormat='R{0:F2}'}" VerticalOptions="Center" HorizontalOptions="Center" />
+                                <Label Grid.Column="3" Grid.Row="0" TextColor="White" Text="{Binding Status_Of_Spending}" VerticalOptions="Center" HorizontalOptions="Center"/>
+                                <BoxView Grid.Row="1" Grid.ColumnSpan="4" HeightRequest="1" Color="LightGray" Margin="0,5,0,0" VerticalOptions="End" />
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </StackLayout>
+            <StackLayout Orientation="Horizontal" BackgroundColor="#29ede7">
+                <StackLayout Padding="10">
+                    <Label Text="Central Region Municipal" FontSize="20" FontAttributes="Bold"/>
+                    <Label WidthRequest="{OnPlatform Android='250'}" Text="The Central mucipal wishes every one to take part in saving water for the future genations, life doen't end with us their are still more people coming. Save water, be a hero." />
+                </StackLayout>
+                <Image IsVisible="{OnPlatform Android='False', Default='True'}" Source="water.jpg" WidthRequest="300" HeightRequest="150" />
+            </StackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

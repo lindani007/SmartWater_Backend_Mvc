@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/Api/">
+    <Project Path="Smart_Water_Consumption_Api/Smart_Water_Consumption_Api.csproj" Id="e95e2c7b-8da6-452d-abe7-14ad82421e12" />
+    <Project Path="Smart_Water_Consumption_Service/Smart_Water_Consumption_Service.csproj" Id="0b4947d2-750e-461e-bec6-2a8fe3e89258" />
+  </Folder>
+  <Folder Name="/Clients/">
+    <Project Path="SmartWater_Backend_Mvc/SmartWater_Backend_Mvc.csproj" />
+    <Project Path="SmartWater_Citizen_Maui/SmartWater_Citizen_Maui.csproj">
+      <Deploy Solution="Debug|*" />
+    </Project>
+  </Folder>
+</Solution>
