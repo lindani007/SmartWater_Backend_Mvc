@@ -19,8 +19,8 @@ namespace Smart_Water_Consumption_Service.Services.DbServices
 
         public async Task<MyGenericValidation<IEnumerable<SubRegionPrediction>>> GetAllSub_RegionPredictions()
         {
-            var response = await _httpClient.GetAsync("api/Sub_RegionPredictions");
-            MyGenericValidation<IEnumerable<SubRegionPrediction>> validation = new MyGenericValidation<IEnumerable<SubRegionPrediction>>();
+            var response = await _httpClient.GetAsync("api/SubRegionPredictions");
+            MyGenericValidation <IEnumerable<SubRegionPrediction>> validation = new MyGenericValidation<IEnumerable<SubRegionPrediction>>();
             if (response.IsSuccessStatusCode)
             {
                 validation.IsSuccess = true;
@@ -38,7 +38,7 @@ namespace Smart_Water_Consumption_Service.Services.DbServices
 
         public async Task<MyGenericValidation<SubRegionPrediction>> AddSub_RegionPrediction(SubRegionPrediction sub_regionprediction)
         {
-            var response = await _httpClient.PostAsJsonAsync("api/Sub_RegionPredictions", sub_regionprediction);
+            var response = await _httpClient.PostAsJsonAsync("api/SubRegionPredictions", sub_regionprediction);
             MyGenericValidation<SubRegionPrediction> validation = new MyGenericValidation<SubRegionPrediction>();
             if (response.IsSuccessStatusCode)
             {

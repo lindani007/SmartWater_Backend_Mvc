@@ -23,7 +23,9 @@ HouseConsumptionDbService houseConsumptionDbService = new HouseConsumptionDbServ
 EmployeeDbService employeeDbService = new EmployeeDbService(apiBaseUrl);
 LoginDbService loginDbService = new LoginDbService(apiBaseUrl);
 ApplianceDbService applianceDbService = new ApplianceDbService(apiBaseUrl);
-
+RegionPredictionDbService regionPredictionDbService = new RegionPredictionDbService(apiBaseUrl);
+Sub_RegionPredictionDbService sub_RegionPredictionDbService = new Sub_RegionPredictionDbService(apiBaseUrl);
+HouseholdPredictionDbService householdPredictionDbService = new HouseholdPredictionDbService(apiBaseUrl);
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(60);

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Smart_Water_Consumption_Api.Ai.MachineLearningModel;
 using Smart_Water_Consumption_Api.Hubs;
 using Smart_Water_Consumption_Api.Models.Db;
 
@@ -11,6 +12,7 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSingleton<ModelsPrediction>();
 
 builder.Services.AddDbContext<SmartWaterCnsumptionDbContentext>(options =>
 {

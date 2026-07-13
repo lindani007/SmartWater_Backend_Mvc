@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Smart_Water_Consumption_Service.Services.AiService.DeepLearningModel;
 using Smart_Water_Consumption_Service.Services.DbServices;
 using SmartWater_Backend_Mvc.Models;
 
@@ -9,11 +10,25 @@ namespace SmartWater_Backend_Mvc.Controllers
         private readonly RegionConsumptionDbService _regionConsumptionDbService;
         private readonly Sub_RegionConsumptionDbService _subregionConsumptionDbService;
         private readonly HouseConsumptionDbService _houseConsumptionDbService;
-        public EngineerController(RegionConsumptionDbService regionConsumptionDbService1, Sub_RegionConsumptionDbService sub_RegionConsumptionDbService, HouseConsumptionDbService houseConsumptionDbService)
+        private readonly HouseholdPredictionDbService _householdPrediction;
+        private readonly Sub_RegionPredictionDbService _subregionPrediction;
+        private readonly RegionPredictionDbService _regionPrediction;
+        private readonly RegionDbService _regionDbService;
+        private readonly Sub_RegionDbService _subregionDbService;
+        private readonly OwnerDbService _ownerDbService;
+        public EngineerController(RegionConsumptionDbService regionConsumptionDbService1, Sub_RegionConsumptionDbService sub_RegionConsumptionDbService, HouseConsumptionDbService houseConsumptionDbService,
+            HouseholdPredictionDbService householdPrediction, Sub_RegionPredictionDbService subRegionPrediction, RegionPredictionDbService regionPrediction,
+            RegionDbService regionDbService1, Sub_RegionDbService sub_RegionDbService1, OwnerDbService ownerDbService1)
         {
             _houseConsumptionDbService = houseConsumptionDbService;
             _regionConsumptionDbService = regionConsumptionDbService1;
             _subregionConsumptionDbService = sub_RegionConsumptionDbService;
+            _householdPrediction = householdPrediction;
+            _subregionPrediction = subRegionPrediction;
+            _regionPrediction = regionPrediction;
+            _regionDbService = regionDbService1;
+            _subregionDbService = sub_RegionDbService1;
+            _ownerDbService = ownerDbService1;
         }
         [HttpGet]
         public async Task<IActionResult> Regions()
@@ -40,6 +55,64 @@ namespace SmartWater_Backend_Mvc.Controllers
             return View(subregions);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> RegionsPredictions()
+        {
+            List<RegionPrediction> regions = await GetAllRegionsPredictions();
+            return View(regions);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SubRegionsPredictions()
+        {
+            List<SubRegionPrediction> regions = await GetAllSubRegionsPredictions();
+            return View(regions);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> HouseholdPredictions()
+        {
+            List<HouseholdPrediction> regions = await GetAllHousholdPredictions();
+            return View(regions);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SummarizeEngineeringReport(string userPrompt)
+        {           
+            var prompt = "";
+            try
+            {
+                var regionsTask = GetRegionConsumptions();
+                var subRegionsTask = GetAllSubRegionsConsumption();
+                var houseHoldsTask = GetAllHouseHoldConsumption();
+
+                await Task.WhenAll(regionsTask, subRegionsTask, houseHoldsTask);
+
+                var contextData = new
+                {
+                    LiveRegions = regionsTask.Result,
+                    LiveSubRegions = subRegionsTask.Result,
+                    RegionPredictions = houseHoldsTask.Result
+                };
+                string serializedJsonData = System.Text.Json.JsonSerializer.Serialize(contextData);
+
+                string systemPrompt = prompt;
+
+                string executionPrompt = $"{systemPrompt}\n\n" +
+                                         $"### LIVE DATABASE CONTEXT PAYLOAD:\n{serializedJsonData}\n\n" +
+                                         $"### USER QUERY:\n{userPrompt}\n\n" +
+                                         $"Execute processing matrix and respond using clear markdown layout:";
+
+                GeminiCore geminiCore = new GeminiCore();
+                var response = geminiCore.GetGeminiResponse(executionPrompt);
+
+                return View("_AiReportViewer", Json(new { aiResponse = response }));
+            }
+            catch (Exception ex)
+            {
+                return Json(new { aiResponse = $"❌ AI Engine Failure: {ex.Message}" });
+            }
+        }
         private async Task<List<RegionConsumption>> GetRegionConsumptions()
         {
             var response = await _regionConsumptionDbService.GetAllRegionsConsumptions();
@@ -99,6 +172,83 @@ namespace SmartWater_Backend_Mvc.Controllers
                 FreeWater = x.FreeWater
             }).ToList();
             return houses;
+        }
+        private async Task<List<HouseHold>> GetAllHouseHoldConsumption()
+        {
+            var response = await _houseConsumptionDbService.GetAllHouseConsumption();
+            var houses = response.Data.Select(x => new HouseHold
+            {
+                Daily_Usage = x.Daily_Usage,
+                Night_Usage = x.Night_Usage,
+                Spike_Usage = x.Spike_Usage,
+                Leakage_Propability = x.Leakage_Percent.Value,
+                SubRegion_Id = x.Sub_RegionId.Value,
+                Household_Id = x.Household_ID.Length,
+                Water_Received = x.Water_Received.Value,
+                Consumption_Month = x.Date.Value,
+                Account_Number = x.Owner_AccountNumber,
+                FreeWater = x.FreeWater
+            }).ToList();
+            return houses;
+        }
+        private async Task<List<RegionPrediction>> GetAllRegionsPredictions()
+        {
+            var regions = await _regionDbService.GetAllRegions();
+            int count = regions.Data.Count();
+            var response = await _regionPrediction.GetAllRegionPredictions();
+            var list = response.Data?.OrderByDescending(x => x.MonthYear).Take(count).ToList();
+            List<RegionPrediction> predictions = list.Select(x => new RegionPrediction
+            {
+                EstimatedHourCost = Math.Round(x.EstimatedHourCost, 2),
+                EstimatedMonthCost = Math.Round(x.EstimatedMonthCost, 2),
+                EstimatedWeekCost = Math.Round(x.EstimatedWeekCost, 2),
+                PredictedHourConsumptionKl = Math.Round(x.PredictedHourConsumptionKl / 1000, 2),
+                PredictedMonthConsumptionKl = Math.Round(x.PredictedMonthConsumptionKl / 1000, 2),
+                PredictedWeekConsumptionKl = Math.Round(x.PredictedWeekConsumptionKl / 1000, 2),
+                RegionName = x.RegionName
+            }).ToList(); 
+            return predictions;
+        }
+        private async Task<List<SubRegionPrediction>> GetAllSubRegionsPredictions()
+        {
+            var regions = await _subregionDbService.GetAllSub_Regions();
+            int count = regions.Data.Count();
+            var response = await _subregionPrediction.GetAllSub_RegionPredictions();
+            var list = response.Data?.OrderByDescending(x => x.MonthYear).Take(count).ToList();
+            List<SubRegionPrediction> predictions = list.Select(x => new SubRegionPrediction
+            {
+                EstimatedHourCost = Math.Round(x.EstimatedHourCost, 2),
+                EstimatedMonthCost = Math.Round(x.EstimatedMonthCost, 2),
+                EstimatedWeekCost = Math.Round(x.EstimatedWeekCost, 2),
+                PredictedHourConsumptionKl = Math.Round(x.PredictedHourConsumptionKl / 1000, 2),
+                PredictedMonthConsumptionKl = Math.Round(x.PredictedMonthConsumptionKl / 1000, 2),
+                PredictedWeekConsumptionKl = Math.Round(x.PredictedWeekConsumptionKl / 1000, 2),
+                SubRegionName = x.SubRegionName
+            }).ToList();
+            return predictions;
+        }
+
+        private async Task<List<HouseholdPrediction>> GetAllHousholdPredictions()
+        {
+            var regions = await _ownerDbService.GetAllOwners();
+            int count = regions.Data.Count();
+            var response = await _householdPrediction.GetAllHouseholdPredictions();
+            var list = response.Data?.OrderByDescending(x => x.MonthYear).Take(count).ToList();
+
+            var subregions = await GetAllSubRegionsConsumption();
+
+            List<HouseholdPrediction> predictions = list.Select(x => new HouseholdPrediction
+            {
+                EstimatedHourCost = Math.Round(x.EstimatedHourCost, 2),
+                EstimatedMonthCost = Math.Round(x.EstimatedMonthCost, 2),
+                EstimatedWeekCost = Math.Round(x.EstimatedWeekCost, 2),
+                PredictedHourConsumptionKl = Math.Round(x.PredictedHourConsumptionKl / 1000, 2),
+                PredictedMonthConsumptionKl = Math.Round(x.PredictedMonthConsumptionKl / 1000, 2),
+                PredictedWeekConsumptionKl = Math.Round(x.PredictedWeekConsumptionKl / 1000, 2),
+                AccountNumber = x.AccountNumber,
+                SubRegionName = subregions.Where(a => a.SubRegion_Id == x.SubRegionId).Select(x => x.SubRegion_Name).FirstOrDefault()
+            }).ToList();
+            return predictions;
         }
     }
 }

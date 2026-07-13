@@ -15,12 +15,12 @@
 <div style="display:flex; flex-direction: row; justify-content: space-between; align-items: center; padding: 10px 20px;">
     <h1 style="color:white;margin:10px; font-size: 24px;">Water Consumption History for: @DateTime.Now.Date.ToString("yyyy MMMM dd")</h1>
     <div class="d-flex gap-2">
-        <a asp-action="ViewFutureForecasts" class="btn fw-bold shadow-sm" style="background-color: #ff3366; color: #fff; border-radius: 8px; padding: 10px 20px; text-decoration:none; transition: all 0.2s;">
+        <a asp-action="SubRegionsPredictions" class="btn fw-bold shadow-sm" style="background-color: #ff3366; color: #fff; border-radius: 8px; padding: 10px 20px; text-decoration:none; transition: all 0.2s;">
             🔮 View Future SubRegion Consumption
         </a>
-        <button id="btnSumFinance" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px; padding: 10px 20px; transition: all 0.2s;">
+        <a asp-controller="Gemini" asp-action="SummarizeEngineeringReport" id="btnSumFinance" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px; padding: 10px 20px; transition: all 0.2s;">
             ✨ Summarize Enginner Report
-        </button>
+        </a>
     </div>
 </div>
 
@@ -66,9 +66,9 @@
         </select>
     </div>
     <div class="ms-auto d-flex align-items-center gap-3">
-        <button asp-action="SummarizeRegionReport" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; min-width: 190px; border-radius: 8px; padding: 8px 16px;">
+        <a asp-controller="Gemini" asp-action="SummarizeEngineeringSubRegions" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; min-width: 190px; border-radius: 8px; padding: 8px 16px;">
             ✨ Summarize SubRegion Report
-        </button>
+        </a>
         <button id="downloadBtn" class="btn fw-bold" style="background-color: #00f0ff; color: #121212; border-radius: 8px; padding: 8px 16px;">
             📥 Download Report
         </button>

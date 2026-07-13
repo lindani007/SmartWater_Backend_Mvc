@@ -97,7 +97,7 @@ namespace Smart_Water_Consumption_Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<double>("ActualConsumptionKl")
+                    b.Property<double>("ActualMonthConsumptionKl")
                         .HasColumnType("REAL");
 
                     b.Property<string>("Appliance_Name")
@@ -105,7 +105,13 @@ namespace Smart_Water_Consumption_Api.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
-                    b.Property<double>("EstimatedCost")
+                    b.Property<double>("EstimatedHourCost")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("EstimatedMonthCost")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("EstimatedWeekCost")
                         .HasColumnType("REAL");
 
                     b.Property<DateTime>("MonthYear")
@@ -115,7 +121,13 @@ namespace Smart_Water_Consumption_Api.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<double>("PredictedConsumptionKl")
+                    b.Property<double>("PredictedHourConsumptionKl")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("PredictedMonthConsumptionKl")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("PredictedWeekConsumptionKl")
                         .HasColumnType("REAL");
 
                     b.HasKey("Id");
@@ -234,17 +246,35 @@ namespace Smart_Water_Consumption_Api.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<double>("ActualConsumptionKl")
+                    b.Property<double>("ActualHourConsumptionKl")
                         .HasColumnType("REAL");
 
-                    b.Property<double>("EstimatedCost")
+                    b.Property<double>("ActualMonthConsumptionKl")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("EstimatedHourCost")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("EstimatedMonthCost")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("EstimatedWeekCost")
                         .HasColumnType("REAL");
 
                     b.Property<DateTime>("MonthYear")
                         .HasColumnType("TEXT");
 
-                    b.Property<double>("PredictedConsumptionKl")
+                    b.Property<double>("PredictedHourConsumptionKl")
                         .HasColumnType("REAL");
+
+                    b.Property<double>("PredictedMonthConsumptionKl")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("PredictedWeekConsumptionKl")
+                        .HasColumnType("REAL");
+
+                    b.Property<int>("SubRegionId")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
@@ -289,52 +319,6 @@ namespace Smart_Water_Consumption_Api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Logins");
-                });
-
-            modelBuilder.Entity("Smart_Water_Consumption_Api.Models.ModelTrainingPayload", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Account")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("ApplianceActive_Id")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Appliance_Name")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<double>("LeakageProbability")
-                        .HasColumnType("REAL");
-
-                    b.Property<double>("PauseTimeMinutes")
-                        .HasColumnType("REAL");
-
-                    b.Property<DateTime>("StartTime")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("StopedTime")
-                        .HasColumnType("TEXT");
-
-                    b.Property<double>("TimeItWasNotRunning")
-                        .HasColumnType("REAL");
-
-                    b.Property<double>("TotalDurationMinutes")
-                        .HasColumnType("REAL");
-
-                    b.Property<double>("WaterUsed")
-                        .HasColumnType("REAL");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ModelTrainingPayloads");
                 });
 
             modelBuilder.Entity("Smart_Water_Consumption_Api.Models.Owner", b =>
@@ -494,16 +478,28 @@ namespace Smart_Water_Consumption_Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<double>("ActualConsumptionKl")
+                    b.Property<double>("ActualMonthConsumptionKl")
                         .HasColumnType("REAL");
 
-                    b.Property<double>("EstimatedCost")
+                    b.Property<double>("EstimatedHourCost")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("EstimatedMonthCost")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("EstimatedWeekCost")
                         .HasColumnType("REAL");
 
                     b.Property<DateTime>("MonthYear")
                         .HasColumnType("TEXT");
 
-                    b.Property<double>("PredictedConsumptionKl")
+                    b.Property<double>("PredictedHourConsumptionKl")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("PredictedMonthConsumptionKl")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("PredictedWeekConsumptionKl")
                         .HasColumnType("REAL");
 
                     b.Property<int>("RegionId")
@@ -524,17 +520,32 @@ namespace Smart_Water_Consumption_Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<double>("ActualConsumptionKl")
+                    b.Property<double>("ActualMonthConsumptionKl")
                         .HasColumnType("REAL");
 
-                    b.Property<double>("EstimatedCost")
+                    b.Property<double>("EstimatedHourCost")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("EstimatedMonthCost")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("EstimatedWeekCost")
                         .HasColumnType("REAL");
 
                     b.Property<DateTime>("MonthYear")
                         .HasColumnType("TEXT");
 
-                    b.Property<double>("PredictedConsumptionKl")
+                    b.Property<double>("PredictedHourConsumptionKl")
                         .HasColumnType("REAL");
+
+                    b.Property<double>("PredictedMonthConsumptionKl")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("PredictedWeekConsumptionKl")
+                        .HasColumnType("REAL");
+
+                    b.Property<int>("RegionId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("SubRegionId")
                         .HasColumnType("INTEGER");

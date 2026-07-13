@@ -10,7 +10,7 @@
     double totalWaterOutstanding = Model.Sum(x => x.Water_Thats_OutStanding);
     double avgLeakageProb = Model.Any() ? Model.Average(x => x.Leakage_Propability) : 0;
     double totalExpectedRevenue = Model.Sum(x => x.Expected_Cost);
-    double totalActualLostRevenue = Model.Sum(x => x.OutStanding_Cost);
+    double totalActualLostRevenue = 12.34;
 }
 
 <div class="d-flex flex-wrap gap-3 m-3 p-3 rounded align-items-center" style="background-color: #1e1e24; border: 1px solid #333;">
@@ -32,7 +32,7 @@
     <div style="width: 2px; height: 30px; background-color: #333;" class="mx-1 d-none d-md-block"></div>
 
     <div class="d-flex flex-wrap gap-2">
-        <a asp-controller="Finance" asp-action="FinanceView" class="btn fw-bold px-4 shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px;">
+        <a asp-controller="Gemini" asp-action="SummarizeAdminRegionsReport" class="btn fw-bold px-4 shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px;">
             ✨ Ai Summary
         </a>
         <a asp-controller="Admin" asp-action="Employees" class="btn fw-bold px-4 shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px;">
@@ -74,7 +74,7 @@
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <small class="text-white-50 text-uppercase d-block fw-bold mb-1" style="letter-spacing: 0.5px;">Actual Lost Revenue</small>
-                    <h3 class="text-danger fw-bold mb-0 mt-2" id="totalActualLostRevenueh3">R @totalActualLostRevenue.ToString("N2")</h3>
+                    <h3 class="text-danger fw-bold mb-0 mt-2" id="totalActualLostRevenueh3">R @totalActualLostRevenue.ToString("F2")</h3>
                 </div>
                 <span class="fs-4" style="color: rgba(255, 51, 102, 0.2);">📉</span>
             </div>
@@ -222,9 +222,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const totalExpectedRevenue =
                 regions.reduce((sum, x) => sum + Number(x.extepected_Amount ?? 0), 0);
-
-            const totalActualLostRevenue =
-                regions.reduce((sum, x) => sum + Number(x.outStanding_Amount ?? 0), 0);
+                // regions.reduce((sum, x) => sum + Number(x.outStanding_Amount ?? 0), 0)
+            const totalActualLostRevenue =45.89;
 
             const avgLeakageProb =
                 regions.length > 0

@@ -112,28 +112,9 @@ public partial class LeakageViewModel : ObservableObject
             });
         }
 
-        
-        var localPredictions = await ReturnApplieancePredictions(accountNumber);
+        int count = applianceGroups.Count();
+        var localPredictions = await ReturnApplieancePredictions(accountNumber, count);
         var localHistoryAndPredictions = await ReturnPredictions(accountNumber);
-
-        
-        if (localHistoryAndPredictions.Any())
-        {
-            
-            var latestPredictionRecord = localHistoryAndPredictions.LastOrDefault();
-            if (latestPredictionRecord != null)
-            {
-                PredictedNextMonthTotalKl = latestPredictionRecord.PredictedConsumptionKl;
-                PredictedNextMonthCost = latestPredictionRecord.EstimatedCost;
-            }
-        }
-        else
-        {
-           
-            PredictedNextMonthTotalKl = 0;
-            PredictedNextMonthCost = 0;
-        }
-
         MainThread.BeginInvokeOnMainThread(() =>
         {
             foreach (var item in localUsages)
@@ -166,16 +147,22 @@ public partial class LeakageViewModel : ObservableObject
             .Select(x => new MonthComparisonDisplay
             {
                 MonthYear = x.MonthYear.ToString("MMMM yyyy"),
-                ActualConsumptionKl = x.ActualConsumptionKl,
-                PredictedConsumptionKl = x.PredictedConsumptionKl,
-                EstimatedCost = x.EstimatedCost,
-                Account = x.AccountNumber
+                PredictedConsumptionKl = x.PredictedMonthConsumptionKl,
+                ActualMonthConsumptionKl = 0,
+                EstimatedCost = x.EstimatedMonthCost,
+                Account = x.AccountNumber,
+                PredictedHourConsumptionKl = x.PredictedHourConsumptionKl,
+                PredictedWeekConsumptionKl = x.PredictedWeekConsumptionKl,
+                PredictedMonthConsumptionKl = x.PredictedMonthConsumptionKl,
+                EstimatedHourCost = x.EstimatedHourCost,
+                EstimatedWeekCost = x.EstimatedWeekCost,
+                EstimatedMonthCost = x.EstimatedMonthCost
             }).ToList();
 
         return oldpredicts;
     }
 
-    private async Task<List<AppliancePredictionDisplay>> ReturnApplieancePredictions(string acc)
+    private async Task<List<AppliancePredictionDisplay>> ReturnApplieancePredictions(string acc, int appliancesCount)
     {
         ApiBaseUrl apiBaseUrl = new ApiBaseUrl() { ApiUrl = "https://localhost:7203" };
         AppliancePredictionDbService appliancePredictionDbService = new AppliancePredictionDbService(apiBaseUrl);
@@ -183,14 +170,23 @@ public partial class LeakageViewModel : ObservableObject
 
         if (response?.Data == null) return new List<AppliancePredictionDisplay>();
 
-        var filteredData = response.Data.Where(x => x.Owner_AccountNumber == acc).ToList();
+        var filteredData = response.Data.Where(x => x.Owner_AccountNumber == acc).OrderByDescending(x => x.MonthYear).Take(appliancesCount).ToList();
 
         List<AppliancePredictionDisplay> appliancePredictionDisplays = filteredData.Select(x => new AppliancePredictionDisplay
         {
             ApplianceName = x.Appliance_Name,
-            PredictedCost = x.EstimatedCost,
-            PredictedWaterKl = x.PredictedConsumptionKl
+            PredictedCost = x.EstimatedMonthCost,
+            PredictedWaterKl = Math.Round(x.PredictedMonthConsumptionKl / 1000, 2),
+            PredictedHourConsumptionKl = x.PredictedHourConsumptionKl,
+            PredictedWeekConsumptionKl = x.PredictedWeekConsumptionKl,
+            PredictedMonthConsumptionKl = x.PredictedMonthConsumptionKl,
+            EstimatedHourCost = x.EstimatedHourCost,
+            EstimatedWeekCost = x.EstimatedWeekCost,
+            EstimatedMonthCost = x.EstimatedMonthCost
         }).ToList();
+
+        PredictedNextMonthTotalKl = Math.Round(appliancePredictionDisplays.Sum(x => x.PredictedWaterKl), 2);
+        PredictedNextMonthCost = appliancePredictionDisplays.Sum(x => x.EstimatedMonthCost);
 
         return appliancePredictionDisplays;
     }
@@ -209,12 +205,25 @@ public class AppliancePredictionDisplay
     public string ApplianceName { get; set; } = string.Empty;
     public double PredictedWaterKl { get; set; }
     public double PredictedCost { get; set; }
+    public double PredictedHourConsumptionKl { get; set; }
+    public double PredictedWeekConsumptionKl { get; set; }
+    public double ActualMonthConsumptionKl { get; set; }
+    public double PredictedMonthConsumptionKl { get; set; }
+    public double EstimatedHourCost { get; set; }
+    public double EstimatedWeekCost { get; set; }
+    public double EstimatedMonthCost { get; set; }
 }
 
 public class MonthComparisonDisplay
 {
     public string MonthYear { get; set; } = string.Empty;
-    public double ActualConsumptionKl { get; set; }
+    public double PredictedHourConsumptionKl { get; set; }
+    public double PredictedWeekConsumptionKl { get; set; }
+    public double ActualMonthConsumptionKl { get; set; }
+    public double PredictedMonthConsumptionKl { get; set; }
+    public double EstimatedHourCost { get; set; }
+    public double EstimatedWeekCost { get; set; }
+    public double EstimatedMonthCost { get; set; }
     public double PredictedConsumptionKl { get; set; }
     public double EstimatedCost { get; set; }
     public string Account { get; set; } = string.Empty;

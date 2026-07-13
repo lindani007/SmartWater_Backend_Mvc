@@ -7,18 +7,35 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Services\AiService\MachineLearningModel\consumptionstatus_model.onnx" />
+    <None Remove="Services\AiService\MachineLearningModel\next_hour_brain.onnx" />
+    <None Remove="Services\AiService\MachineLearningModel\next_month_brain.onnx" />
+    <None Remove="Services\AiService\MachineLearningModel\next_week_brain.onnx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Services\AiService\MachineLearningModel\consumptionstatus_model.onnx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Services\AiService\MachineLearningModel\next_hour_brain.onnx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Services\AiService\MachineLearningModel\next_month_brain.onnx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Services\AiService\MachineLearningModel\next_week_brain.onnx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google_GenerativeAI" Version="3.6.6" />
     <PackageReference Include="MailKit" Version="4.17.0" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.9" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client.Core" Version="10.0.9" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Core" Version="1.2.11" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.9" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.9" />
-    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.27.0" />
-    <PackageReference Include="Microsoft.ML.OnnxRuntime.Managed" Version="1.27.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Services\AiService\MachineLearningModel\" />
   </ItemGroup>
 
 </Project>

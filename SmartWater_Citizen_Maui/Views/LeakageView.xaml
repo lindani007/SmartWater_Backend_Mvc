@@ -57,54 +57,49 @@
                     </CollectionView.ItemTemplate>
                 </CollectionView>
             </VerticalStackLayout>
-            <VerticalStackLayout Spacing="5">
-                <Label Text="Consumption Comparison History" TextColor="White" FontSize="16" FontAttributes="Bold" Margin="0,0,0,5"/>
-                <Grid BackgroundColor="#29ede7" Padding="10,8" ColumnDefinitions="1.5*,*,*">
-                    <Label Grid.Column="0" Text="Month" TextColor="Black" FontAttributes="Bold" FontSize="12"/>
-                    <Label Grid.Column="1" Text="Actual" TextColor="Black" FontAttributes="Bold" HorizontalOptions="Center" FontSize="12"/>
-                    <Label Grid.Column="2" Text="Predicted" TextColor="Black" FontAttributes="Bold" HorizontalOptions="Center" FontSize="12"/>
-                </Grid>
-                <CollectionView ItemsSource="{Binding HistoricalComparisons}" SelectionMode="None">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="viewmodels:MonthComparisonDisplay">
-                            <Grid Padding="10,10" ColumnDefinitions="1.5*,*,*" BackgroundColor="#111" Margin="0,1">
-                                <Label Grid.Column="0" Text="{Binding MonthYear}" TextColor="White" VerticalOptions="Center" FontSize="13"/>
-                                <Label Grid.Column="1" Text="{Binding ActualConsumptionKl, StringFormat='{0:N1} kL'}" TextColor="White" HorizontalOptions="Center" VerticalOptions="Center" FontSize="13"/>
-                                <Label Grid.Column="2" Text="{Binding PredictedConsumptionKl, StringFormat='{0:N1} kL'}" TextColor="#29ede7" HorizontalOptions="Center" VerticalOptions="Center" FontSize="13"/>
-
-                            </Grid>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
-            </VerticalStackLayout>
+            
 
             <Border StrokeThickness="1" Stroke="#29ede7" BackgroundColor="#111" Padding="15">
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="12"/>
                 </Border.StrokeShape>
                 <VerticalStackLayout Spacing="12">
-                    <Label Text="✨ Do you wanna know your next month water consumption?" TextColor="#29ede7" FontSize="15" FontAttributes="Bold" HorizontalOptions="Center"/>
+                    <Label Text="✨ Do you wanna know your next hour, week and month water consumption?" TextColor="#29ede7" FontSize="15" FontAttributes="Bold" HorizontalOptions="Center"/>
 
                     <Grid ColumnDefinitions="*,*" Margin="0,5">
                         <VerticalStackLayout Grid.Column="0" HorizontalOptions="Center">
-                            <Label Text="Predicted Volume" TextColor="Gray" FontSize="11" HorizontalOptions="Center"/>
+                            <Label Text="Predicted Month Volume" TextColor="Gray" FontSize="11" HorizontalOptions="Center"/>
                             <Label Text="{Binding PredictedNextMonthTotalKl, StringFormat='{0:N2} kL'}" TextColor="White" FontSize="16" FontAttributes="Bold"/>
                         </VerticalStackLayout>
                         <VerticalStackLayout Grid.Column="1" HorizontalOptions="Center">
-                            <Label Text="Estimated Cost Budget" TextColor="Gray" FontSize="11" HorizontalOptions="Center"/>
+                            <Label Text="Estimated Month Cost Budget" TextColor="Gray" FontSize="11" HorizontalOptions="Center"/>
                             <Label Text="{Binding PredictedNextMonthCost, StringFormat='R {0:N2}'}" TextColor="#29ede7" FontSize="16" FontAttributes="Bold"/>
                         </VerticalStackLayout>
                     </Grid>
 
                     <Line Stroke="Gray" StrokeThickness="0.5" X2="300" HorizontalOptions="Center" Margin="0,5"/>
-
+                    <StackLayout>
+                        <Grid BackgroundColor="#29ede7" Padding="5,6" ColumnDefinitions="2*,*,*,*,*,*,*">
+                            <Label Grid.Column="0" Text="Appliance Name" TextColor="Black" FontAttributes="Bold" FontSize="12"/>
+                            <Label Grid.Column="1" Text="Hour (L)" TextColor="Black" FontAttributes="Bold" HorizontalOptions="Center" FontSize="12"/>
+                            <Label Grid.Column="2" Text="Week (L)" TextColor="Black" FontAttributes="Bold" HorizontalOptions="Center" FontSize="12"/>
+                            <Label Grid.Column="3" Text="Month (KL)" TextColor="Black" FontAttributes="Bold" HorizontalOptions="Center" FontSize="12"/>
+                            <Label Grid.Column="4" Text="Hour Cost (R)" TextColor="Black" FontAttributes="Bold" HorizontalOptions="Center" FontSize="12"/>
+                            <Label Grid.Column="5" Text="Week Cost (R)" TextColor="Black" FontAttributes="Bold" HorizontalOptions="Center" FontSize="12"/>
+                            <Label Grid.Column="6" Text="Month Cost (R)" TextColor="Black" FontAttributes="Bold" HorizontalOptions="Center" FontSize="12"/>
+                        </Grid>
+                    </StackLayout>
                     <CollectionView ItemsSource="{Binding AppliancePredictions}" SelectionMode="None">
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="viewmodels:AppliancePredictionDisplay">
-                                <Grid Padding="5,6" ColumnDefinitions="2*,*,*">
+                                <Grid Padding="5,6" ColumnDefinitions="2*,*,*,*,*,*,*">
                                     <Label Grid.Column="0" Text="{Binding ApplianceName}" TextColor="#ccc" FontSize="13" VerticalOptions="Center"/>
-                                    <Label Grid.Column="1" Text="{Binding PredictedWaterKl, StringFormat='{0:N2} kL'}" TextColor="White" HorizontalOptions="Center" FontSize="13" VerticalOptions="Center"/>
-                                    <Label Grid.Column="2" Text="{Binding PredictedCost, StringFormat='R {0:N2}'}" TextColor="#29ede7" HorizontalOptions="End" FontSize="13" VerticalOptions="Center"/>
+                                    <Label Grid.Column="1" Text="{Binding PredictedHourConsumptionKl, StringFormat='{0:N2} L'}" TextColor="White" HorizontalOptions="Center" FontSize="13" VerticalOptions="Center"/>
+                                    <Label Grid.Column="2" Text="{Binding PredictedWeekConsumptionKl, StringFormat='{0:N2} L'}" TextColor="White" HorizontalOptions="Center" FontSize="13" VerticalOptions="Center"/>
+                                    <Label Grid.Column="3" Text="{Binding PredictedWaterKl, StringFormat='{0:N2} kL'}" TextColor="White" HorizontalOptions="Center" FontSize="13" VerticalOptions="Center"/>
+                                    <Label Grid.Column="4" Text="{Binding EstimatedHourCost, StringFormat='R {0:N2}'}" TextColor="#29ede7" HorizontalOptions="End" FontSize="13" VerticalOptions="Center"/>
+                                    <Label Grid.Column="5" Text="{Binding EstimatedWeekCost, StringFormat='R {0:N2}'}" TextColor="#29ede7" HorizontalOptions="End" FontSize="13" VerticalOptions="Center"/>
+                                    <Label Grid.Column="6" Text="{Binding PredictedCost, StringFormat='R {0:N2}'}" TextColor="#29ede7" HorizontalOptions="End" FontSize="13" VerticalOptions="Center"/>
                                 </Grid>
                             </DataTemplate>
                         </CollectionView.ItemTemplate>

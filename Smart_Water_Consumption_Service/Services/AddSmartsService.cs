@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Smart_Water_Consumption_Service.Models;
+using Smart_Water_Consumption_Service.Services.AiService.MachineLearningModel;
 using Smart_Water_Consumption_Service.Services.DbServices;
 using System;
 using System.Collections.Generic;
@@ -96,6 +97,8 @@ namespace Smart_Water_Consumption_Service.Services
                 var apiBaseUrl = provider.GetRequiredService<IOptions<ApiBaseUrl>>().Value;
                 return new Sub_RegionPredictionDbService(apiBaseUrl);
             });
+
+            
         }
     }
 }

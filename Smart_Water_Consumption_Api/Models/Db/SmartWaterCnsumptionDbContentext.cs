@@ -25,7 +25,7 @@ namespace Smart_Water_Consumption_Api.Models.Db
         public DbSet<RegionPrediction> RegionPredictions { get; set; }
         public DbSet<SubRegionPrediction> SubRegionPredictions { get; set; }
         public DbSet<AppliancePrediction> AppliancePredictions { get; set; }
-        public DbSet<ModelTrainingPayload> ModelTrainingPayloads { get; set; }
+
     }
 
 }

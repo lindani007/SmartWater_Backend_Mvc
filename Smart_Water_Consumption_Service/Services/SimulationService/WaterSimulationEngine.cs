@@ -1,14 +1,18 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using Org.BouncyCastle.Asn1.X509;
 using Smart_Water_Consumption_Service.Models;
+using Smart_Water_Consumption_Service.Services.AiService.MachineLearningModel;
 using Smart_Water_Consumption_Service.Services.DbServices;
 using Smart_Water_Consumption_Service.Services.SignalRService;
 using Smart_Water_Consumption_Service.Services.TarrifService;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using System.Net.NetworkInformation;
 using System.Runtime.Intrinsics.X86;
 using System.Text;
+using System.Xml.Linq;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Smart_Water_Consumption_Service.Services.SimulationService
@@ -23,6 +27,11 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
         private OwnerDbService _ownerDbService;
         private RegionDbService _regiondbservice;
         private Sub_RegionDbService _sub_RegionDbService;
+        private ModelPredictionsConnector _modelPredictionsConnector;
+        private AppliancePredictionDbService _appliancePredictionDbService;
+        private HouseholdPredictionDbService _householdPredictionDbService;
+        private Sub_RegionPredictionDbService _sub_RegionPredictionDbService;
+        private RegionPredictionDbService _regionPredictionDbService;
         public WaterSimulationEngine()
         {
             ApiBaseUrl apiBaseUrl = new ApiBaseUrl { ApiUrl = "https://localhost:7203" };
@@ -34,19 +43,33 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
             _ownerDbService = new OwnerDbService(apiBaseUrl);
             _regiondbservice = new RegionDbService(apiBaseUrl);
             _sub_RegionDbService = new Sub_RegionDbService(apiBaseUrl);
+            _modelPredictionsConnector = new ModelPredictionsConnector(apiBaseUrl);
+            _appliancePredictionDbService = new AppliancePredictionDbService(apiBaseUrl);
+            _householdPredictionDbService = new HouseholdPredictionDbService(apiBaseUrl);
+            _sub_RegionPredictionDbService = new Sub_RegionPredictionDbService(apiBaseUrl);
+            _regionPredictionDbService = new RegionPredictionDbService(apiBaseUrl);
         }
         Random _random = new Random();
         public async Task RunSimulation()
         {
+
+
+            await AddAplianceConsumptionsToDb(await GetApplianceConsumptions());
+
+            var houses = await GetHouseConsumptions();
+            await UpdateHouseConsumptionsToDb(houses.housesConsumption, houses.housesPredictions);
+
+            var subs = await GetSubRegionConsumption();
+            await UpdateSubRegionConsumptionsToDb(subs.subConsumptions, subs.subPredictions);
+
+            var regions = await GetRegionConsumption();
+            await UpdateRegionConsumptionsToDb(regions.regionCunsumptions, regions.regionPredictions);
+
             try
             {
                 RealtimeDashboard realtimeDashboard = new RealtimeDashboard();
                 
-                await AddAplianceConsumptionsToDb(await GetApplianceConsumptions());
-                await UpdateHouseConsumptionsToDb(await GetHouseConsumptions());
-                await UpdateSubRegionConsumptionsToDb(await GetSubRegionConsumption());
-                await UpdateRegionConsumptionsToDb(await GetRegionConsumption());
-
+                
                 await realtimeDashboard.StartConnection();
                 bool updatesAvailable = true;
                 await realtimeDashboard.SendData(updatesAvailable);
@@ -63,28 +86,41 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
                 return "ok";
             return result.Message;
         }
-        private async Task<string> UpdateHouseConsumptionsToDb(List<HouseConsumption> houseConsumptions)
+        private async Task<string> UpdateHouseConsumptionsToDb(List<HouseConsumption> houseConsumptions, List<HouseholdPrediction> householdPredictions)
         {
             var result = await _houseConsumptionDbService.UpdateHouseConsumption(houseConsumptions);
+            foreach (var item in householdPredictions)
+            {
+                await _householdPredictionDbService.AddHouseholdPrediction(item);
+            }
+            
             if (result.IsSuccess)
                 return "ok";
             return result.Message;
         }
-        private async Task<string> UpdateSubRegionConsumptionsToDb(List<Sub_RegionConsumption> subRegionConsumptions)
+        private async Task<string> UpdateSubRegionConsumptionsToDb(List<Sub_RegionConsumption> subRegionConsumptions, List<SubRegionPrediction> subRegionPredictions)
         {
             var result = await _sub_RegionConsumptionDbService.UpdateSub_RegionConsumption(subRegionConsumptions);
+            foreach (var item in subRegionPredictions)
+            {
+                var response = await _sub_RegionPredictionDbService.AddSub_RegionPrediction(item);
+            }
             if (result.IsSuccess)
                 return "ok";
             return result.Message;
         }
-        private async Task<string> UpdateRegionConsumptionsToDb(List<RegionConsumption> RegionConsumptions)
+        private async Task<string> UpdateRegionConsumptionsToDb(List<RegionConsumption> RegionConsumptions, List<RegionPrediction> regionPredictions)
         {
             var result = await _regionConsumptionDbService.PutRegionConsumption(RegionConsumptions);
+            foreach (var item in regionPredictions)
+            {
+                await _regionPredictionDbService.AddRegionPrediction(item);
+            }
             if (result.IsSuccess)
                 return "ok";
             return result.Message;
         }
-
+        
         public async Task<List<ApplianceConsumption>> GetApplianceConsumptions()
         {
             var apps = await _applianceDbService.GetAllAppliance();
@@ -99,14 +135,47 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
 
             return await SimulateApplianceConsumption(list);
         }
-        public async Task<List<HouseConsumption>> GetHouseConsumptions()
+        public async Task<(List<HouseConsumption> housesConsumption, List<HouseholdPrediction> housesPredictions)> GetHouseConsumptions()
         {
 
             var applianceResult = await _applianceConsumptionDbService.GetAllApplianceConsumptions();
-
+            var appliancePredictionsResult = await _appliancePredictionDbService.GetAllAppliancePredictions();
+            var apps = await _applianceDbService.GetAllAppliance();
             List<ApplianceConsumption> applianceConsumptions = applianceResult.Data
                 .Where(x => x.Date.Value.Month == DateTime.Now.Month && x.Date.Value.Year == DateTime.Now.Year)
                 .ToList();
+            var owners = await _ownerDbService.GetAllOwners();
+            List<HouseholdPrediction> householdPredictions = new List<HouseholdPrediction>();
+            foreach (var owner in owners.Data)
+            {
+                int count = apps.Data.Where(x => x.Owner_AccountNumber == owner.Owner_AccountNumber).Count();
+                List<AppliancePrediction> appliancePredictions = appliancePredictionsResult.Data.Where(x => x.Owner_AccountNumber == owner.Owner_AccountNumber).OrderByDescending(x => x.MonthYear).Take(count).ToList();
+                string acc = owner.Owner_AccountNumber;
+                string AccountNumber = acc;
+                double EstimatedHourCost = Math.Round(appliancePredictions.Sum(x => x.EstimatedHourCost), 2);
+                double EstimatedMonthCost = Math.Round(appliancePredictions.Sum(x => x.EstimatedMonthCost), 2);
+                double EstimatedWeekCost = Math.Round(appliancePredictions.Sum(x => x.EstimatedWeekCost), 2);
+                double PredictedHourConsumptionKl = Math.Round(appliancePredictions.Sum(x => x.PredictedHourConsumptionKl), 2);
+                double PredictedMonthConsumptionKl = Math.Round(appliancePredictions.Sum(x => x.PredictedMonthConsumptionKl), 2);
+                double PredictedWeekConsumptionKl = Math.Round(appliancePredictions.Sum(x => x.PredictedWeekConsumptionKl), 2);
+                var MonthYear = appliancePredictions.Select(x => x.MonthYear).FirstOrDefault();
+                int SubRegionId = await GetOwnersSubRegionId(acc);
+                HouseholdPrediction householdPrediction = new HouseholdPrediction
+                {
+                    AccountNumber = acc,
+                    EstimatedHourCost = Math.Round(appliancePredictions.Sum(x => x.EstimatedHourCost), 2),
+                    EstimatedMonthCost = Math.Round(appliancePredictions.Sum(x => x.EstimatedMonthCost), 2),
+                    EstimatedWeekCost = Math.Round(appliancePredictions.Sum(x => x.EstimatedWeekCost), 2),
+                    PredictedHourConsumptionKl = Math.Round(appliancePredictions.Sum(x => x.PredictedHourConsumptionKl), 2),
+                    PredictedMonthConsumptionKl = Math.Round(appliancePredictions.Sum(x => x.PredictedMonthConsumptionKl), 2),
+                    PredictedWeekConsumptionKl = Math.Round(appliancePredictions.Sum(x => x.PredictedWeekConsumptionKl), 2),
+                    MonthYear = appliancePredictions.Select(x => x.MonthYear).FirstOrDefault(),
+                    SubRegionId = await GetOwnersSubRegionId(acc)
+                };
+                householdPredictions.Add(householdPrediction);
+            }
+
+
 
             var houseResult = await _houseConsumptionDbService.GetAllHouseConsumption();
             if (!houseResult.Data.Any())
@@ -115,6 +184,7 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
 
                 var groups = applianceConsumptions
                     .GroupBy(x => x.Account);
+
 
                 foreach (var group in groups)
                 {
@@ -142,7 +212,7 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
 
                     });
                 }
-                return newhouses;
+                return (newhouses, householdPredictions);
             }
 
             List<HouseConsumption> houses = houseResult.Data
@@ -201,19 +271,53 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
                 house.Water_Received = Math.Round((daily + night), 2);
             }
 
-            return houses;
+            return (houses, householdPredictions);
         }
-        public async Task<List<Sub_RegionConsumption>> GetSubRegionConsumption()
+        public async Task<(List<Sub_RegionConsumption> subConsumptions, List<SubRegionPrediction> subPredictions)> GetSubRegionConsumption()
         {
 
             var houseResult = await _houseConsumptionDbService.GetAllHouseConsumption();
+            var housePredictionsResult = await _householdPredictionDbService.GetAllHouseholdPredictions();
 
             List<HouseConsumption> houses = houseResult.Data
                 .Where(x => x.Date?.Month == DateTime.Now.Month &&
                             x.Date?.Year == DateTime.Now.Year)
                 .ToList();
+            var apps = await _ownerDbService.GetAllOwners();
+            int count = apps.Data.Count();
+            List<HouseholdPrediction> householdPredictions = housePredictionsResult.Data.Select(x => new HouseholdPrediction
+            {
+                AccountNumber = x.AccountNumber,
+                EstimatedHourCost = x.EstimatedHourCost,
+                MonthYear = x.MonthYear,
+                EstimatedMonthCost = x.EstimatedMonthCost,
+                EstimatedWeekCost = x.EstimatedWeekCost,
+                PredictedHourConsumptionKl = x.PredictedHourConsumptionKl,
+                PredictedMonthConsumptionKl = x.PredictedMonthConsumptionKl,
+                PredictedWeekConsumptionKl = x.PredictedWeekConsumptionKl,
+                SubRegionId = x.SubRegionId,
+            }).OrderByDescending(x => x.MonthYear).Take(count).ToList();
 
-
+            var houseGroup = householdPredictions.GroupBy(x => x.SubRegionId);
+            List<SubRegionPrediction> subRegionPredictions = new List<SubRegionPrediction>();
+            foreach (var grp in houseGroup)
+            {
+                int subId = grp.Key;
+                SubRegionPrediction subRegionPrediction = new SubRegionPrediction
+                {
+                    SubRegionName = await GetOwnersSubRegionName(subId),
+                    EstimatedHourCost = Math.Round(grp.Sum(x => x.EstimatedHourCost), 2),
+                    EstimatedMonthCost = Math.Round(grp.Sum(x => x.EstimatedMonthCost), 2),
+                    EstimatedWeekCost = Math.Round(grp.Sum(x => x.EstimatedWeekCost), 2),
+                    PredictedHourConsumptionKl = Math.Round(grp.Sum(x => x.PredictedHourConsumptionKl),2 ),
+                    PredictedMonthConsumptionKl = Math.Round(grp.Sum(x => x.PredictedMonthConsumptionKl),2),
+                    PredictedWeekConsumptionKl = Math.Round(grp.Sum(x => x.PredictedWeekConsumptionKl), 2),
+                    MonthYear = grp.Select(x => x.MonthYear).FirstOrDefault(),
+                    SubRegionId = subId,
+                    RegionId = await GetRegionId(subId),
+                };
+                subRegionPredictions.Add(subRegionPrediction);
+            }
             var subResult = await _sub_RegionConsumptionDbService.GetAllSub_RegionConsumption();
 
             if (!subResult.Data.Any())
@@ -226,13 +330,13 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
                 {
                     double dayUmbush = 0.00;
                     double nightUmbush = 0.00;
-                    if (_random.Next(0, 101) < 60)
+                    if (_random.Next(0, 101) < 10)
                     {
                         (dayUmbush, nightUmbush) = SimulateWaterAmbush(_random.Next(0, 25));
                     }
 
                     double leakagePipe = 0.00;
-                    if (_random.Next(0, 101) < 40)
+                    if (_random.Next(0, 101) < 10)
                     {
                         leakagePipe = SimulateLeakingPipe();
                     }
@@ -264,7 +368,7 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
                         RegionId = await GetRegionId(group.Key.Value)
                     });
                 }
-                return newsubs;
+                return (newsubs, subRegionPredictions);
             }
 
             List<Sub_RegionConsumption> subs = subResult.Data.ToList();
@@ -287,13 +391,13 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
 
                 double dayUmbush = 0.00;
                 double nightUmbush = 0.00;
-                if (_random.Next(0, 101) < 60)
+                if (_random.Next(0, 101) < 30)
                 {
                     (dayUmbush, nightUmbush) = SimulateWaterAmbush(_random.Next(0, 25));
                 }
 
                 double leakagePipe = 0.00;
-                if (_random.Next(0, 101) < 40)
+                if (_random.Next(0, 101) < 10)
                 {
                     leakagePipe = SimulateLeakingPipe();
                 }
@@ -304,9 +408,17 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
 
 
                 var data = houses.Where(x => x.Sub_RegionId == sub.Sub_RegionId).ToList();
-
+                
                 double watersent = Math.Round((data.Sum(x => x.Daily_Usage ?? 0) + data.Sum(x => x.Night_Usage ?? 0) + dayambushKl + nightambushKl + leakPipeKl), 2);
                 double waterused = Math.Round(data.Sum(x => x.Total_WaterUsed ?? 0), 2);
+                double freewater = data.Sum(x => x.FreeWater.Value);
+                double cost = Math.Round(data.Sum(x => x.Actual_Amount ?? 0), 2);
+                double Actualcost =  await CalculateExpectedAmount(watersent, freewater, "0000000001");
+                double loss = Actualcost - cost;
+                if (loss <= 0)
+                    loss = 0.00;
+                    
+
                 double leakagePercent = Math.Round(((watersent - waterused) / watersent) * 100, 2);
                 sub.Id = sub.Id;
                 sub.Daily_Usage = Math.Round((data.Sum(x => x.Daily_Usage ?? 0) + dayambushKl + leakPipeKl), 2);
@@ -314,28 +426,64 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
                 sub.Leakage_Percent = leakagePercent;
                 sub.Spike_Usage = data.Sum(x => x.Spike_Usage ?? 0);
                 sub.Extepected_Amount = Math.Round(data.Sum(x => x.Extepected_Amount ?? 0), 2);
-                sub.Actual_Amount = Math.Round(data.Sum(x => x.Actual_Amount ?? 0), 2);
-                sub.OutStanding_Amount = (sub.Extepected_Amount ?? 0) - (sub.Actual_Amount ?? 0);
-                sub.FreeWater = data.Sum(x => x.FreeWater ?? 0);
+                sub.Actual_Amount = cost;
+                sub.OutStanding_Amount = Math.Round(loss);
+                sub.FreeWater = freewater;
                 sub.Water_Payed = Math.Round(waterused, 2);
                 sub.OutstandingWater = Math.Round((watersent - waterused), 2);
                 sub.Date = DateTime.Now;
                 sub.Water_Sent = Math.Round(watersent, 2);
             }
 
-            return subs;
+            return (subs, subRegionPredictions);
         }
-        public async Task<List<RegionConsumption>> GetRegionConsumption()
+        public async Task<(List<RegionConsumption> regionCunsumptions, List<RegionPrediction> regionPredictions)> GetRegionConsumption()
         {
 
             var subResult = await _sub_RegionConsumptionDbService.GetAllSub_RegionConsumption();
+            var subPredictionsResults = await _sub_RegionPredictionDbService.GetAllSub_RegionPredictions();
 
             List<Sub_RegionConsumption> subs = subResult.Data
                 .Where(x => x.Date?.Month == DateTime.Now.Month &&
                             x.Date?.Year == DateTime.Now.Year)
                 .ToList();
 
+            var apps = await _sub_RegionDbService.GetAllSub_Regions();
+            int count = apps.Data.Count();
+            List<SubRegionPrediction> subregionPredictions = subPredictionsResults.Data.Select(x => new SubRegionPrediction
+            {
+                RegionId = x.RegionId,
+                EstimatedHourCost = x.EstimatedHourCost,
+                MonthYear = x.MonthYear,
+                EstimatedMonthCost = x.EstimatedMonthCost,
+                EstimatedWeekCost = x.EstimatedWeekCost,
+                PredictedHourConsumptionKl = x.PredictedHourConsumptionKl,
+                PredictedMonthConsumptionKl = x.PredictedMonthConsumptionKl,
+                PredictedWeekConsumptionKl = x.PredictedWeekConsumptionKl,
+                SubRegionId = x.SubRegionId,
+                SubRegionName = x.SubRegionName,
+            }).OrderByDescending(x => x.MonthYear).Take(count).ToList();
 
+            var subgrops = subregionPredictions.GroupBy(x => x.RegionId);
+
+            List<RegionPrediction> regionPredictions = new List<RegionPrediction>();
+            foreach (var grp in subgrops)
+            {
+                int regionId = grp.Key;
+                RegionPrediction regionPrediction = new RegionPrediction
+                {
+                    EstimatedHourCost = Math.Round(grp.Sum(x => x.EstimatedHourCost), 2),
+                    EstimatedMonthCost = Math.Round(grp.Sum(x => x.EstimatedMonthCost), 2),
+                    EstimatedWeekCost = Math.Round(grp.Sum(x => x.EstimatedWeekCost), 2),
+                    PredictedHourConsumptionKl = Math.Round(grp.Sum(x => x.PredictedHourConsumptionKl),2 ),
+                    PredictedMonthConsumptionKl = Math.Round(grp.Sum(x => x.PredictedMonthConsumptionKl), 2),
+                    PredictedWeekConsumptionKl = Math.Round(grp.Sum(x => x.PredictedWeekConsumptionKl), 2),
+                    MonthYear = grp.Select(x => x.MonthYear).FirstOrDefault(),
+                    RegionId = regionId,
+                    RegionName = await GetRegionName(regionId),
+                };
+                regionPredictions.Add(regionPrediction);
+            }
 
             var regionResult = await _regionConsumptionDbService.GetAllRegionsConsumptions();
 
@@ -349,13 +497,13 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
                 {
                     double dayUmbush = 0.00;
                     double nightUmbush = 0.00;
-                    if (_random.Next(0, 101) < 60)
+                    if (_random.Next(0, 101) < 30)
                     {
                         (dayUmbush, nightUmbush) = SimulateWaterAmbush(_random.Next(0, 25));
                     }
 
                     double leakagePipe = 0.00;
-                    if (_random.Next(0, 101) < 40)
+                    if (_random.Next(0, 101) < 10)
                     {
                         leakagePipe = SimulateLeakingPipe();
                     }
@@ -385,7 +533,7 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
                         Region_Name = await GetRegionName(group.Key)
                     });
                 }
-                return newregions;
+                return (newregions, regionPredictions);
             }
 
             List<RegionConsumption> regions = regionResult.Data.ToList();
@@ -408,13 +556,13 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
 
                 double dayUmbush = 0.00;
                 double nightUmbush = 0.00;
-                if (_random.Next(0, 101) < 60)
+                if (_random.Next(0, 101) < 30)
                 {
                     (dayUmbush, nightUmbush) = SimulateWaterAmbush(_random.Next(0, 25));
                 }
 
                 double leakagePipe = 0.00;
-                if (_random.Next(0, 101) < 40)
+                if (_random.Next(0, 101) < 10)
                 {
                     leakagePipe = SimulateLeakingPipe();
                 }
@@ -426,14 +574,20 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
                 var data = subs.Where(x => x.RegionId == region.Region_Id).ToList();
                 double waterused = Math.Round(data.Sum(x => x.Water_Payed ?? 0), 2);
                 double watersent = Math.Round((data.Sum(x => x.Water_Sent.Value) + leaks), 2);
+                double freewater = data.Sum(x => x.FreeWater.Value);
+                double cost = Math.Round(data.Sum(x => x.Actual_Amount ?? 0), 2);
+                double Actualcost = await CalculateExpectedAmount(watersent, freewater, "0000000001");
+                double loss = Actualcost - cost;
+                if (loss <= 0)
+                    loss = 0.00;
                 region.Daily_Usage = Math.Round(data.Sum(x => x.Daily_Usage ?? 0), 2) + dayambushKl;
                 region.Night_Usage = Math.Round(data.Sum(x => x.Night_Usage ?? 0), 2) + nightambushKl;
                 region.Leakage_Percent = Math.Round(((watersent - waterused) / watersent) * 100, 2);
                 region.Spike_Usage = data.Sum(x => x.Spike_Usage ?? 0);
                 region.Extepected_Amount = data.Sum(x => x.Extepected_Amount ?? 0);
-                region.Actual_Amount = data.Sum(x => x.Actual_Amount ?? 0);
-                region.OutStanding_Amount = (region.Extepected_Amount ?? 0) - (region.Actual_Amount ?? 0);
-                region.FreeWater = data.Sum(x => x.FreeWater ?? 0);
+                region.Actual_Amount = cost;
+                region.OutStanding_Amount = loss;
+                region.FreeWater = freewater;
                 region.Water_Payed = Math.Round(waterused, 2);
                 region.OutstandingWater = Math.Round((watersent - waterused), 2);
                 region.Date = DateTime.Now;
@@ -441,12 +595,13 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
                 region.Water_Sent = Math.Round(watersent, 2);
             }
 
-            return regions;
+            return (regions, regionPredictions);
         }
 
         public async Task<List<ApplianceConsumption>> SimulateApplianceConsumption(List<Appliance> appliances)
         {
             List<ApplianceConsumption> simulatedData = new();
+            List<AppliancePrediction> appliancePredictions = new List<AppliancePrediction>();
 
             int currentHour = DateTime.Now.Hour;
             bool isNight = currentHour >= 22 || currentHour <= 4;
@@ -473,20 +628,23 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
                 if (frequency <= 0)
                     frequency = 1;
                 double Usage = flowRate * behaviour.DurationMinutes * frequency;
-                double leakageSim = SimulateBackgroundLeaks(appliance.Appliance_Name, isNight);
-                double dailyUsage;
-                double nightUsage;
-                Usage += leakageSim;
+
+                double leakageSim = 0;
+
+                if (_random.Next(0,101) < 31)
+                    leakageSim = SimulateBackgroundLeaks(appliance.Appliance_Name, isNight);
+                double dailyUsage = leakageSim;
+                double nightUsage = leakageSim;
                 if (isNight)
                 {
-                    dailyUsage = 0;
-                    nightUsage = Usage;
+                    dailyUsage += 0;
+                    nightUsage += Usage;
                 }
 
                 else
                 {
-                    dailyUsage = Usage;
-                    nightUsage = 0;
+                    dailyUsage += Usage;
+                    nightUsage += 0;
                 }
 
                 double usageKL = Usage / 1000.0;
@@ -496,13 +654,116 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
                 double cost = await CalculateApplianceConsumptionCost(appliance.Owner_AccountNumber, propValue, usageKL);
                 if (cost <= 0)
                     cost = 0.00;
-                // 12. Leakage %
-                double leakagePercent = 0.00;
 
-                // 13. Status
-                string status = "Normal";
-                int aiResponse = _random.Next(0, 2);
-                if(aiResponse == 0)
+                double leakagePercent = 0;
+
+                if (Usage > 0)
+                {
+                    double nightRatio = nightUsage / Usage;
+
+                    if (nightRatio >= 0.60)
+                        leakagePercent += 35;
+
+                    double difference = Math.Abs(dailyUsage - nightUsage);
+
+                    if (difference <= Usage * 0.10)
+                        leakagePercent += 30;
+
+                    if (behaviour.DurationMinutes > 120)
+                        leakagePercent += 20;
+
+                }
+
+                leakagePercent = Math.Min(leakagePercent, 100);
+
+                int holiday;
+
+                if(_random.Next(0, 101) < 30)
+                    holiday = 1;
+                else
+                    holiday = 0;
+
+                if(eventToChoose > 7)
+                    eventToChoose = 7;
+
+                int timeofday;
+                // Morning = 0, Afternoon = 1, Evening = 2, Night = 3
+
+                if (currentHour >= 4 && currentHour < 12)
+                    timeofday = 0;
+                else if (currentHour >= 12 && currentHour < 17)
+                    timeofday = 1;
+                else if (currentHour >= 17 && currentHour < 20)
+                    timeofday = 2;
+                else
+                    timeofday = 3;
+
+                var applianceTodayUsage = await ReturnDailyAndNightUsgae(appliance.Appliance_Id);
+                int overused = await HowManyOversudeItHad(appliance.Appliance_Id);
+                var applianceAvg = await ReturnApplianceAveragesUsgae(appliance.Appliance_Id);
+
+                int numberOfLeaks = 0;
+                if (appliance.Appliance_Name.Contains("toilet"))
+                    numberOfLeaks = _random.Next(0, 8);
+                else if (appliance.Appliance_Name.Contains("sink") || appliance.Appliance_Name.Contains("tap"))
+                    numberOfLeaks = _random.Next(0, 4);
+                
+
+                ConsumptionStatusRequest request = new ConsumptionStatusRequest
+                {
+                    ApplianceId = appliance.Appliance_Id,
+                    Duration = behaviour.DurationMinutes,
+                    FlowRate = flowRate,
+                    WaterUsed = Usage,
+                    DayUsage = applianceTodayUsage.Day,
+                    NightUsage = applianceTodayUsage.Night,
+                    Holiday = holiday,
+                    PreviousLeak = numberOfLeaks,
+                    Last7Average = applianceAvg.Last7days,
+                    Last30Average = applianceAvg.Last30days,
+                    NumberOfHighUsages = overused,
+                    DayOfWeek = eventToChoose,
+                    TimeOfTheDay = timeofday,
+                    NumberOfPeople = appliance.NumberOfPeopleUsingIt
+                };
+                var lastUsgaes = await LastUsgages(appliance.Appliance_Id);
+                int month = DateTime.Today.Month;
+
+                int weekOfYear = CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(
+                    DateTime.Today,
+                    CalendarWeekRule.FirstFourDayWeek,
+                    DayOfWeek.Monday);
+                FuturePredictionRequest futurePredictionRequest = new FuturePredictionRequest
+                {
+                    ApplianceId = appliance.Appliance_Id,
+                    YesterdayUsage = lastUsgaes.yesterday,
+                    FlowRate = flowRate,
+                    WeekOfYear = weekOfYear,
+                    Month = month,
+                    HourOfDay = currentHour,
+                    Holiday = holiday,
+                    PreviousHourUsage = lastUsgaes.lastHour,
+                    Last7Average = applianceAvg.Last7days,
+                    Last30Average = applianceAvg.Last30days,
+                    CurrentWeekUsage = lastUsgaes.currentWeek,
+                    DayOfWeek = eventToChoose,
+                    CurrentMonthUsage = lastUsgaes.currentMonth,
+                    NumberOfPeople = appliance.NumberOfPeopleUsingIt
+                };
+
+                int mlResponse = await _modelPredictionsConnector.PredictStatus(request);
+                var futurePredictions = await GetFuturePredictions(futurePredictionRequest);
+                double estimatedHourCost = await CalculateApplianceConsumptionCost(appliance.Owner_AccountNumber, propValue, (futurePredictions.nextHour / 1000));
+                double estimatedWeekCost = await CalculateApplianceConsumptionCost(appliance.Owner_AccountNumber, propValue, (futurePredictions.nextWeek / 1000));
+                double estimatedMonthCost = await CalculateApplianceConsumptionCost(appliance.Owner_AccountNumber, propValue, (futurePredictions.nextMonth / 1000));
+
+                AppliancePrediction appliancePrediction =  await AddFuturePrediction(appliance.Owner_AccountNumber, appliance.Appliance_Name, futurePredictions.nextHour, futurePredictions.nextWeek, futurePredictions.nextMonth,estimatedHourCost, estimatedWeekCost, estimatedMonthCost);
+                appliancePredictions.Add(appliancePrediction);
+
+
+                string status;
+                
+                if(mlResponse == 0)
                     status = "Normal";
                 else
                     status = "OverConsumption";
@@ -522,11 +783,19 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
                     Leakage_Percent = Math.Round(leakagePercent, 2),
 
                     Daily_Status = status,
+
                     Night_Status = status,
 
 
                     Account = appliance.Owner_AccountNumber
+
                 });
+            }
+
+            var appliancePredictionsToAdd = await CalculatePredictedApplianceConsumptionCost(appliancePredictions);
+            foreach (var item in appliancePredictionsToAdd)
+            {
+                await _appliancePredictionDbService.AddAppliancePrediction(item);
             }
 
             return simulatedData;
@@ -672,19 +941,19 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
             if (name.Contains("toilet"))
             {
                 if (_random.Next(100) < 15)
-                    return 200.0 / 24.0;
+                    return 200.0;
             }
 
             if (name.Contains("tap") || name.Contains("sink"))
             {
                 if (_random.Next(100) < 8)
-                    return 25.0 / 24.0;
+                    return 25.0;
             }
 
             if (name.Contains("shower"))
             {
                 if (_random.Next(100) < 5)
-                    return 40.0 / 24.0;
+                    return 40.0;
             }
 
             return 0;
@@ -749,7 +1018,7 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
                 Night_Status = x.Night_Status,
                 Account = x.Account,
                 Id = x.Id
-            }).Where(x => x.Account == acc && x.Date.Value.Date.Month == DateTime.Now.Month).ToList();
+            }).Where(x => x.Account == acc && x.Date.Value.Date.Month == DateTime.Now.Month ).ToList();
             double daily = ownerAppliances.Sum(x => x.Daily_Usage.Value);
             double night = ownerAppliances.Sum(x => x.Night_Usage.Value);
             double totalKl = (daily + night) / 1000;
@@ -766,6 +1035,98 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
             }
         }
 
+        private async Task<List<AppliancePrediction>> CalculatePredictedApplianceConsumptionCost(List<AppliancePrediction> appliancePredictions)
+        {
+            var group = appliancePredictions.GroupBy(x => x.Owner_AccountNumber);
+            foreach (var grp in group)
+            {
+                string acc = grp.Key;
+                string prop = await GetOwnersPropetyvalue(acc);
+                var ownerAppliances = appliancePredictions.Where(x => x.Owner_AccountNumber == acc);
+                double totalKl = ownerAppliances.Sum(x => x.PredictedMonthConsumptionKl) / 1000;
+                double cost = WaterConsumptionCalculation.CalculateCostOfWater(totalKl, prop);
+                foreach (var item in appliancePredictions)
+                {
+                    if (totalKl > 6)
+                    {
+                        double contributedPercent = ((item.PredictedMonthConsumptionKl / 1000) / totalKl) * 100;
+                        item.EstimatedMonthCost = Math.Round((cost * (contributedPercent / 100.0)), 2);
+                    }
+                }
+            }
+
+            return appliancePredictions;
+        }
+
+        private async Task<(double Day, double Night)> ReturnDailyAndNightUsgae(int applianceid)
+        {
+            var app = await GetDbAppliances();
+            var list = app.Where(x => x.Date.Value.Date == DateTime.Today && x.Appliance_Id == applianceid).ToList();
+            return (list.Sum(x => x.Daily_Usage.Value), list.Sum(x => x.Night_Usage.Value));
+        }
+        private async Task<(double Last7days, double Last30days)> ReturnApplianceAveragesUsgae(int applianceid)
+        {
+            var app = await GetDbAppliances();
+            var list = app.Where(x => x.Appliance_Id == applianceid).ToList();
+            double last7days = list.Where(x => x.Date.Value.Date >= DateTime.Today.AddDays(-7)).Sum(x => x.Daily_Usage.Value + x.Night_Usage.Value);
+            double last30days = list.Where(x => x.Date.Value.Date >= DateTime.Today.AddDays(-30)).Sum(x => x.Daily_Usage.Value + x.Night_Usage.Value);
+            return (last7days, last30days);
+        }
+        private async Task<int> HowManyOversudeItHad(int applianceid)
+        {
+            var app = await GetDbAppliances();
+            var list = app.Where(x => x.Appliance_Id == applianceid).ToList();
+            int leakageCount = list.Count(x => x.Night_Status != "Normal" || x.Daily_Status != "Normal");
+            return leakageCount;
+        }
+        private async Task<(double nextHour, double nextWeek, double nextMonth)> GetFuturePredictions(FuturePredictionRequest futurePredictionRequest)
+        {
+            double nextHour = await _modelPredictionsConnector.PredictNextHourUsage(futurePredictionRequest);
+            double nextWeek = await _modelPredictionsConnector.PredictNextWeekUsage(futurePredictionRequest);
+            double nextMonth = await _modelPredictionsConnector.PredictNextMonthUsage(futurePredictionRequest);
+            return (nextHour, nextWeek, nextMonth);
+        }
+        private async Task<(double lastHour, double yesterday, double currentWeek, double currentMonth)> LastUsgages(int applianceid)
+        {
+            var app = await GetDbAppliances();
+            var list = app.Where(x => x.Appliance_Id == applianceid).ToList();
+            double lasthour = list.Where(x => x.Date.Value.Date >= DateTime.Today.AddHours(-1)).Sum(x => x.Daily_Usage.Value + x.Night_Usage.Value);
+            double yesterday = list.Where(x => x.Date.Value.Date >= DateTime.Today.AddDays(-1)).Sum(x => x.Daily_Usage.Value + x.Night_Usage.Value);
+            DateTime today = DateTime.Today;
+
+            int daysSinceMonday = ((int)today.DayOfWeek + 6) % 7;
+
+            DateTime firstDayOfWeek = today.AddDays(-daysSinceMonday);
+
+            double currentWeekUsage = list
+                .Where(x => x.Date.HasValue &&
+                            x.Date.Value.Date >= firstDayOfWeek)
+                .Sum(x => x.Daily_Usage.Value + x.Night_Usage.Value);
+
+            DateTime firstDayOfMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+
+            double currentMonthUsage = list
+                .Where(x => x.Date.HasValue &&
+                            x.Date.Value.Date >= firstDayOfMonth)
+                .Sum(x => x.Daily_Usage.Value + x.Night_Usage.Value);
+            return (lasthour, yesterday, currentWeekUsage, currentMonthUsage);
+        }
+        private async Task<AppliancePrediction> AddFuturePrediction(string acc, string appName, double hour, double week, double month, double hourcost, double weekCost, double monthcost)
+        {
+            AppliancePrediction appliancePrediction = new AppliancePrediction()
+            {
+                Appliance_Name = appName,
+                EstimatedHourCost = Math.Round( hourcost, 2),
+                EstimatedWeekCost = Math.Round(weekCost, 2),
+                EstimatedMonthCost = Math.Round(monthcost, 2),
+                PredictedHourConsumptionKl = Math.Round( hour, 2),
+                PredictedMonthConsumptionKl = Math.Round( month, 2),
+                PredictedWeekConsumptionKl = Math.Round( week, 2),
+                Owner_AccountNumber = acc,
+                MonthYear = DateTime.UtcNow
+            };
+            return appliancePrediction;
+        }
         private async Task<List<ApplianceConsumption>> GetDbAppliances()
         {
             var response = await _applianceConsumptionDbService.GetAllApplianceConsumptions();

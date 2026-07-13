@@ -1,0 +1,144 @@
+﻿@model IEnumerable<HouseholdPrediction>
+
+@{
+    ViewData["Title"] = "Households Predictions";
+    Layout = "_FinanceLayout";
+    var totalPredictedMonthVolume = Model?.Sum(x => x.PredictedMonthConsumptionKl) ?? 0.0;
+    var totalEstimatedMonthCost = Model?.Sum(x => x.EstimatedMonthCost) ?? 0.0;
+}
+
+<div class="dashboard-container">
+    <div class="text-center dashboard-header mb-4">
+        <h2>✨ Do you wanna know your next hour, week and month Household consumption?</h2>
+    </div>
+
+    <div class="row summary-row mb-4">
+        <div class="col-6 text-start">
+            <span class="summary-label">Predicted Month Volume</span>
+            <div class="summary-value text-white">@totalPredictedMonthVolume.ToString("F2") kL</div>
+        </div>
+        <div class="col-6 text-end">
+            <span class="summary-label">Estimated Month Cost Budget</span>
+            <div class="summary-value summary-cost">R @totalEstimatedMonthCost.ToString("F2")</div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover table-dark">
+            <thead>
+                <tr>
+                    <th class="text-start">Account Number</th>
+                    <th class="text-end">Hour (KL)</th>
+                    <th class="text-end">Week (KL)</th>
+                    <th class="text-end">Month (KL)</th>
+                    <th class="text-end">Hour Cost (R)</th>
+                    <th class="text-end">Week Cost (R)</th>
+                    <th class="text-end">Month Cost (R)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="text-start text-muted-custom">@item.AccountNumber</td>
+                            <td class="text-end text-white">@item.PredictedHourConsumptionKl.ToString("F2") KL</td>
+                            <td class="text-end text-white">@item.PredictedWeekConsumptionKl.ToString("F2") KL</td>
+                            <td class="text-end text-white">@item.PredictedMonthConsumptionKl.ToString("F2") kL</td>
+                            <td class="text-end text-cyan">R @item.EstimatedHourCost.ToString("F2")</td>
+                            <td class="text-end text-cyan">R @item.EstimatedWeekCost.ToString("F2")</td>
+                            <td class="text-end text-cyan">R @item.EstimatedMonthCost.ToString("F2")</td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">No prediction data available.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    body {
+        background-color: #0b0f12;
+    }
+
+    .dashboard-container {
+        background-color: #0d1117;
+        border: 2px solid #00f3ff;
+        border-radius: 12px;
+        padding: 25px;
+        margin: 30px auto;
+        max-width: 1200px;
+        box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .dashboard-header h2 {
+        color: #00f3ff;
+        font-size: 1.25rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .summary-label {
+        color: #8a99ad;
+        font-size: 0.85rem;
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .summary-value {
+        font-size: 1.4rem;
+        font-weight: bold;
+    }
+
+    .summary-cost {
+        color: #00f3ff;
+    }
+
+    /* Table Customizations */
+    .dashboard-table {
+        background-color: transparent;
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 0;
+    }
+
+        .dashboard-table thead tr {
+            background-color: #00f3ff;
+        }
+
+        .dashboard-table th {
+            color: #000000 !important;
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 10px 15px;
+            border: none !important;
+        }
+
+        .dashboard-table td {
+            padding: 12px 15px;
+            vertical-align: middle;
+            border: none !important;
+            font-size: 0.9rem;
+        }
+
+        .dashboard-table tbody tr {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+        }
+
+    /* Utility Color Classes */
+    .text-cyan {
+        color: #00f3ff !important;
+    }
+
+    .text-muted-custom {
+        color: #a0aec0 !important;
+    }
+</style>
