@@ -20,78 +20,126 @@ namespace SmartWater_Backend_Mvc.Controllers
         [HttpGet]
         public async Task<IActionResult> Citezens()
         {
-            List<Owner> owners = await GetCitezens();
-            return View(owners);
+            try
+            {
+                return View(await GetCitezens());
+
+            }
+            catch (Exception ex)
+            {
+                ViewData["Message"] = ex.Message;
+                return View(await GetCitezens());
+            }
         }
 
         [HttpGet]
         public async Task<IActionResult> AddCitezens(int id)
         {
-            var subreagions = await GetAllSubRegions();
-            var subr = subreagions.FirstOrDefault(x => x.Id == id);
-            Owner owner = new Owner();
-            owner.SubRegionId = subr.Id;
-            owner.SubRegionName = subr.SubRegionName;
-            return View(owner);
+            try
+            {
+                var subreagions = await GetAllSubRegions();
+                var subr = subreagions.FirstOrDefault(x => x.Id == id);
+                Owner owner = new Owner();
+                owner.SubRegionId = subr.Id;
+                owner.SubRegionName = subr.SubRegionName;
+                return View(owner);
+            }
+            catch (Exception ex)
+            {
+                ViewData["Message"] = ex.Message;
+                return RedirectToAction("Citezens");
+            }
         }
 
         [HttpPost]
         public async Task<IActionResult> AddCitezens(Owner owner)
         {
-            if(ModelState.IsValid)
+            try
             {
-                owner.Account_Number = await CreateCitezenAccountNumber();
-                string results = await AddCitezen(owner);
-                if(results == "Citezen added")
+                if (ModelState.IsValid)
                 {
-                    List<Owner> owners = await GetCitezens();
-                    return View("Citezens", owners);
+                    owner.Account_Number = await CreateCitezenAccountNumber();
+                    string results = await AddCitezen(owner);
+                    if (results == "Citezen added")
+                    {
+                        List<Owner> owners = await GetCitezens();
+                        return View("Citezens", owners);
+                    }
+                    ViewData["Message"] = results;
+                    return View(owner);
                 }
-                ViewData["Message"] = results;
-               return View(owner);
+                return View(owner);
             }
-            return View(owner);
+            catch (Exception ex)
+            {
+                ViewData["Message"] = ex.Message;
+                return View(owner);
+            }
         }
 
         [HttpGet]
         public async Task<IActionResult> EditCitezens(string id)
         {
-            List<Owner> owners = await GetCitezens();
-            Owner citezen = owners.Where(x => x.OwnerId_Number == id).FirstOrDefault() ?? new Owner();
-            
-            return View(citezen);
+            try
+            {
+                List<Owner> owners = await GetCitezens();
+                Owner citezen = owners.Where(x => x.OwnerId_Number == id).FirstOrDefault() ?? new Owner();
+
+                return View(citezen);
+            }
+            catch (Exception ex)
+            {
+                ViewData["Message"] = ex.Message;
+                return RedirectToAction("Citezens");
+            }
         }
 
         [HttpPost]
         public async Task<IActionResult> EditCitezens(Owner owner)
         {
-            Smart_Water_Consumption_Service.Models.Owner citezen = new()
+            try
             {
-                Owner_AccountNumber = owner.Account_Number ?? string.Empty,
-                Household_ID = owner.HouseId.ToString(),
-                Owner_Name = owner.OwnerName ?? string.Empty,
-                Owner_MeterNumber = owner.Meter_Number ?? string.Empty,
-                Owner_Email = owner.Email ?? string.Empty,
-                Owner_IdNumber = owner.OwnerId_Number ?? string.Empty,
-                Owner_PhoneNumber = owner.Phone ?? string.Empty,
-                Sub_RegionName = owner.SubRegionName ?? string.Empty,
-            };
+                Smart_Water_Consumption_Service.Models.Owner citezen = new()
+                {
+                    Owner_AccountNumber = owner.Account_Number ?? string.Empty,
+                    Household_ID = owner.HouseId.ToString(),
+                    Owner_Name = owner.OwnerName ?? string.Empty,
+                    Owner_MeterNumber = owner.Meter_Number ?? string.Empty,
+                    Owner_Email = owner.Email ?? string.Empty,
+                    Owner_IdNumber = owner.OwnerId_Number ?? string.Empty,
+                    Owner_PhoneNumber = owner.Phone ?? string.Empty,
+                    Sub_RegionName = owner.SubRegionName ?? string.Empty,
+                };
 
-            var response = await _ownerDbService.UpdateOwner(citezen);
-            if(response.IsSuccess)
-            {
-                List<Owner> owners = await GetCitezens();
-                return View("Citezens", owners);
+                var response = await _ownerDbService.UpdateOwner(citezen);
+                if (response.IsSuccess)
+                {
+                    List<Owner> owners = await GetCitezens();
+                    return View("Citezens", owners);
+                }
+                ViewData["Message"] = response.Message ?? string.Empty;
+                return View(owner);
             }
-            ViewData["Message"] = response.Message ?? string.Empty;
-            return View(owner);
+            catch (Exception ex)
+            {
+                ViewData["Message"] = ex.Message;
+                return View(owner);
+            }
+            
         }
 
         [HttpGet]
         public async Task<IActionResult> Regions()
         {
-            List<Region> regions = await GetAllRegions();
-            return View(regions);
+            try
+            {
+                return View(await GetAllRegions());
+            }
+            catch (Exception ex)
+            {
+                ViewData["Message"] = ex.Message;
+                return RedirectToAction("Login", "Account");
+            }
         }
 
         [HttpGet]
@@ -103,134 +151,214 @@ namespace SmartWater_Backend_Mvc.Controllers
         [HttpPost]
         public async Task<IActionResult> AddRegion(Region region)
         {
-            if (ModelState.IsValid)
+            try
             {
-                string results = await AddRegionToDb(region);
-                if(results == "region added")
+                if (ModelState.IsValid)
                 {
-                    List<Region> regions = await GetAllRegions();
-                    return View("Regions", regions);
+                    string results = await AddRegionToDb(region);
+                    if (results == "region added")
+                    {
+                        return View("Regions", await GetAllRegions());
+                    }
+                    return View(region);
                 }
                 return View(region);
             }
-            return View();
+            catch (Exception ex)
+            {
+                ViewData["Message"] = ex.Message;
+                return View(region);
+            }
+            
         }
 
         [HttpGet]
         public async Task<IActionResult> EditRegion(int id)
         {
-            List<Region> regions = await GetAllRegions();
-            var region = regions.Where(x => x.Region_Id == id).FirstOrDefault();
-            return View(region);
+            try
+            {
+                List<Region> regions = await GetAllRegions();
+                var region = regions.Where(x => x.Region_Id == id).FirstOrDefault();
+                return View(region);
+            }
+            catch (Exception ex)
+            {
+                ViewData["Message"] = ex.Message;
+                return RedirectToAction("Regions");
+            }
         }
 
         [HttpPost]
         public async Task<IActionResult> EditRegion(Region region)
         {
-            Smart_Water_Consumption_Service.Models.Region regionsToUpdate = new Smart_Water_Consumption_Service.Models.Region()
+            try
             {
-                Id = region.Region_Id,
-                Region_Name = region.Region_Name ?? string.Empty,
-                Region_Meter = region.Meter_Number ?? string.Empty,
-            };
-            var response = await _regionDbService.UpdateRegion(regionsToUpdate);
-            if(response.IsSuccess)
-            {
-                List<Region> regions = await GetAllRegions();
-                return View("Regions", regions);
+                Smart_Water_Consumption_Service.Models.Region regionsToUpdate = new Smart_Water_Consumption_Service.Models.Region()
+                {
+                    Id = region.Region_Id,
+                    Region_Name = region.Region_Name ?? string.Empty,
+                    Region_Meter = region.Meter_Number ?? string.Empty,
+                };
+                var response = await _regionDbService.UpdateRegion(regionsToUpdate);
+                if (response.IsSuccess)
+                {
+                    List<Region> regions = await GetAllRegions();
+                    return View("Regions", regions);
+                }
+                ViewData["Message"] = response.Message ?? string.Empty;
+                return View(region);
             }
-            ViewData["Message"] = response.Message ?? string.Empty;
-            return View(region);
+            catch (Exception ex)
+            {
+                ViewData["Message"] = ex.Message;
+                return View(region);
+            }
         }
 
         [HttpGet]
         public async Task<IActionResult> DeleteRegion(int id)
         {
-            var response = await _regionDbService.DeleteRegion(id);
-            if(response.IsSuccess)
+            try
             {
-                List<Region> NEWregions = await GetAllRegions();
-                return View("Regions", NEWregions);
+                var response = await _regionDbService.DeleteRegion(id);
+                if (response.IsSuccess)
+                {
+                    List<Region> NEWregions = await GetAllRegions();
+                    return View("Regions", NEWregions);
+                }
+                List<Region> regions = await GetAllRegions();
+                return View("Regions", regions);
             }
-            List<Region> regions = await GetAllRegions();
-            return View("Regions", regions);
+            catch (Exception ex)
+            {
+                ViewData["Message"] = ex.Message;
+                return RedirectToAction("Regions");
+            }
         }
 
         [HttpGet]
         public async Task<IActionResult> SubRegions()
         {
-            List<Sub_Region> subregions = await GetAllSubRegions();
-            return View(subregions);
+            try
+            {
+                return View(await GetAllSubRegions());
+            }
+            catch (Exception ex)
+            {
+                ViewData["Message"] = ex.Message;
+                return RedirectToAction("Regions");
+            }
         }
 
         [HttpGet]
         public async Task<IActionResult> AddSubRegion(int id)
         {
-            var regions = await GetAllRegions();
-            Region region = regions.FirstOrDefault(x => x.Region_Id == id) ?? new Region();
-            Sub_Region sub_Region = new Sub_Region();
-            sub_Region.RegionId = id;
-            sub_Region.Region_Name = region.Region_Name ?? string.Empty;
-            return View(sub_Region);
+            try
+            {
+                var regions = await GetAllRegions();
+                Region region = regions.FirstOrDefault(x => x.Region_Id == id) ?? new Region();
+                Sub_Region sub_Region = new Sub_Region();
+                sub_Region.RegionId = id;
+                sub_Region.Region_Name = region.Region_Name ?? string.Empty;
+                return View(sub_Region);
+            }
+            catch (Exception ex)
+            {
+                ViewData["Message"] = ex.Message;
+                return RedirectToAction("SubRegions");
+            }
         }
 
         [HttpPost]
         public async Task<IActionResult> AddSubRegion(Sub_Region subRegion)
         {
-            if (ModelState.IsValid)
+            try
             {
-                string results = await AddSubReginToDb(subRegion);
-                if(results == "Sub Region added")
+                if (ModelState.IsValid)
                 {
-                    List<Sub_Region> subregions = await GetAllSubRegions();
-                    return View("SubRegions", subregions);
+                    string results = await AddSubReginToDb(subRegion);
+                    if (results == "Sub Region added")
+                    {
+                        List<Sub_Region> subregions = await GetAllSubRegions();
+                        return View("SubRegions", subregions);
+                    }
+                    ViewData["Message"] = results;
+                    return View(subRegion);
                 }
-                ViewData["Message"] = results;
                 return View(subRegion);
             }
-            return View(subRegion);
+            catch (Exception ex)
+            {
+                ViewData["Message"] = ex.Message;
+                return View(subRegion);
+            }
         }
 
         [HttpGet]
         public async Task<IActionResult> EditSubRegion(int id)
         {
-            List<Sub_Region> subregions = await GetAllSubRegions();
-            var region = subregions.Where(x => x.Id == id).ToList().FirstOrDefault();
-            return View(region);
+            try
+            {
+                List<Sub_Region> subregions = await GetAllSubRegions();
+                var region = subregions.Where(x => x.Id == id).ToList().FirstOrDefault();
+                return View(region);
+            }
+            catch (Exception ex)
+            {
+                ViewData["Message"] = ex.Message;
+                return RedirectToAction("SubRegions");
+            }
         }
 
         [HttpPost]
         public async Task<IActionResult> EditSubRegion(Sub_Region region)
         {
-            Smart_Water_Consumption_Service.Models.Sub_Region sub_Region = new()
+            try
             {
-                Id = region.Id,
-                RegionId = region.RegionId,
-                RegionName = region.Region_Name ?? string.Empty,
-                SubRegionName = region.SubRegionName ?? string.Empty,
-                SubRegion_Meter = region.Meter_Number ?? string.Empty
-            };
-            var response = await _subRegionDbService.PutSub_Region(sub_Region);
-            if(response.IsSuccess)
-            {
-                List<Sub_Region> subregions = await GetAllSubRegions();
-                return View("SubRegions", subregions);
+                Smart_Water_Consumption_Service.Models.Sub_Region sub_Region = new()
+                {
+                    Id = region.Id,
+                    RegionId = region.RegionId,
+                    RegionName = region.Region_Name ?? string.Empty,
+                    SubRegionName = region.SubRegionName ?? string.Empty,
+                    SubRegion_Meter = region.Meter_Number ?? string.Empty
+                };
+                var response = await _subRegionDbService.PutSub_Region(sub_Region);
+                if (response.IsSuccess)
+                {
+                    List<Sub_Region> subregions = await GetAllSubRegions();
+                    return View("SubRegions", subregions);
+                }
+                ViewData["Message"] = response.Message ?? string.Empty;
+                return View(region);
             }
-            ViewData["Message"] = response.Message ?? string.Empty;
-            return View(region);
+            catch (Exception ex)
+            {
+                ViewData["Message"] = ex.Message;
+                return View(region);
+            }
         }
 
         [HttpGet]
         public async Task<IActionResult> DeleteSubRegion(int id)
         {
-            var reponse = await _subRegionDbService.DeleteSub_Region(id);
-            if(reponse.IsSuccess)
+            try
             {
-                List<Sub_Region> NEWsubregions = await GetAllSubRegions();
-                return View("SubRegions", NEWsubregions);
+                var reponse = await _subRegionDbService.DeleteSub_Region(id);
+                if (reponse.IsSuccess)
+                {
+                    List<Sub_Region> NEWsubregions = await GetAllSubRegions();
+                    return View("SubRegions", NEWsubregions);
+                }
+                List<Sub_Region> subregions = await GetAllSubRegions();
+                return View("SubRegions", subregions);
             }
-            List<Sub_Region> subregions = await GetAllSubRegions();
-            return View("SubRegions", subregions);
+            catch (Exception ex)
+            {
+                ViewData["Message"] = ex.Message;
+                return RedirectToAction("SubRegions");
+            }
+           
         }
 
        

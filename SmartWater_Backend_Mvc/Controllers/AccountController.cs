@@ -24,25 +24,34 @@ namespace SmartWater_Backend_Mvc.Controllers
         [HttpPost]
         public async Task<IActionResult> Login(Models.Login login)
         {
-            if(ModelState.IsValid)
+            try
             {
-                HttpContext.Session.SetString("stuffId", login.Stuff_Id);
-                string result = await VerifyLogin(login.Stuff_Id, login.Password);
-                if(result == "User Login succesfuly. finance")
-                    return RedirectToAction("FinanceView", "Finance");
-                else if (result == "User Login succesfuly. engineer")
-                    return RedirectToAction("Regions", "Engineer");
-                else if (result == "User Login succesfuly. admin")
-                    return RedirectToAction("AdminDashboard", "Admin");
-                else if (result == "User Login succesfuly. clerk")
-                    return RedirectToAction("Citezens", "Clerk");
+                if (ModelState.IsValid)
+                {
+                    HttpContext.Session.SetString("stuffId", login.Stuff_Id);
+                    string result = await VerifyLogin(login.Stuff_Id, login.Password);
+                    if (result == "User Login succesfuly. finance")
+                        return RedirectToAction("FinanceView", "Finance");
+                    else if (result == "User Login succesfuly. engineer")
+                        return RedirectToAction("Regions", "Engineer");
+                    else if (result == "User Login succesfuly. admin")
+                        return RedirectToAction("AdminDashboard", "Admin");
+                    else if (result == "User Login succesfuly. clerk")
+                        return RedirectToAction("Citezens", "Clerk");
 
-                HttpContext.Session.Remove("stuffId");
-                ViewData["Message"] = result;
-                return View();
+                    HttpContext.Session.Remove("stuffId");
+                    ViewData["Message"] = result;
+                    return View();
+                }
+                ViewData["Message"] = VerifyLogin(login.Stuff_Id, login.Password);
+                return View(login);
             }
-            ViewData["Message"] = VerifyLogin(login.Stuff_Id, login.Password);
-            return View(login);
+            catch (Exception ex)
+            {
+                ViewData["Message"] = $"An error occurred: {ex.Message}";
+                return View(login);
+            }
+            
         }
 
         [HttpGet]
@@ -53,14 +62,22 @@ namespace SmartWater_Backend_Mvc.Controllers
         [HttpPost]
         public async Task<IActionResult> ForgotPassword(Models.Login login)
         {
-            string results = await VerifyEmail(login.Email ?? string.Empty, login.Stuff_Id ?? string.Empty);
-            if(results == "Email is verfied. You can proced with changing you password")
+            try
             {
-                HttpContext.Session.SetString("IdThatChangingPassword", login.Stuff_Id ?? string.Empty);
-                return View("VerfiyCode");
+                string results = await VerifyEmail(login.Email ?? string.Empty, login.Stuff_Id ?? string.Empty);
+                if (results == "Email is verfied. You can proced with changing you password")
+                {
+                    HttpContext.Session.SetString("IdThatChangingPassword", login.Stuff_Id ?? string.Empty);
+                    return View("VerfiyCode");
+                }
+                ViewData["Message"] = results;
+                return View(login);
             }
-            ViewData["Message"] = results;
-            return View(login);
+            catch (Exception ex)
+            {
+                ViewData["Message"] = $"An error occurred: {ex.Message}";
+                return View(login);
+            }
         }
         [HttpGet]
         public IActionResult VerfiyCode()
@@ -71,12 +88,21 @@ namespace SmartWater_Backend_Mvc.Controllers
         [HttpPost]
         public async Task<IActionResult> VerfiyCode(Models.Login login)
         {
-            string results = await VerifyCode(login.Role);
-            if (results == "Code verified succesful.")
-                return View("ChangePassword");
+            try
+            {
+                string results = await VerifyCode(login.Role);
+                if (results == "Code verified succesful.")
+                    return View("ChangePassword");
 
-            ViewData["Message"] = results;
-            return View(login);
+                ViewData["Message"] = results;
+                return View(login);
+            }
+            catch (Exception ex)
+            {
+                ViewData["Message"] = $"An error occurred: {ex.Message}";
+                return View(login);
+            }
+           
         }
 
         [HttpGet]
@@ -87,13 +113,21 @@ namespace SmartWater_Backend_Mvc.Controllers
         [HttpPost]
         public async Task<IActionResult> ChangePassword(ChangePassword changePassword)
         {
-            string stuffId = HttpContext.Session.GetString("IdThatChangingPassword") ?? string.Empty;
-            string results = await ChangePassword(changePassword.Password ?? string.Empty,changePassword.ConfirmPassword ?? string.Empty, stuffId);
-            if (results == "Password changed sucsfuly.")
-                return View("Login");
+            try
+            {
+                string stuffId = HttpContext.Session.GetString("IdThatChangingPassword") ?? string.Empty;
+                string results = await ChangePassword(changePassword.Password ?? string.Empty, changePassword.ConfirmPassword ?? string.Empty, stuffId);
+                if (results == "Password changed sucsfuly.")
+                    return View("Login");
 
-            ViewData["Message"] = results;
-            return View(changePassword);
+                ViewData["Message"] = results;
+                return View(changePassword);
+            }
+            catch (Exception ex)
+            {
+                ViewData["Message"] = $"An error occurred: {ex.Message}";
+                return View(changePassword);
+            }
         }
 
         public async Task<string> VerifyLogin(string staffId, string password)

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Smart_Water_Consumption_Service.Models;
+using Smart_Water_Consumption_Service.Services.AiService.DeepLearningModel;
 using Smart_Water_Consumption_Service.Services.AiService.MachineLearningModel;
 using Smart_Water_Consumption_Service.Services.DbServices;
 using System;
@@ -97,8 +98,23 @@ namespace Smart_Water_Consumption_Service.Services
                 var apiBaseUrl = provider.GetRequiredService<IOptions<ApiBaseUrl>>().Value;
                 return new Sub_RegionPredictionDbService(apiBaseUrl);
             });
+            services.AddSingleton(provider =>
+            {
+                var apiBaseUrl = provider.GetRequiredService<IOptions<ApiBaseUrl>>().Value;
+                return new MyLLMAiService(apiBaseUrl);
+            });
 
-            
+            services.AddSingleton(provider =>
+            {
+                var apiBaseUrl = provider.GetRequiredService<IOptions<ApiBaseUrl>>().Value;
+                return new ChatMessagesDbService(apiBaseUrl);
+            });
+
+            services.AddSingleton(provider =>
+            {
+                var apiBaseUrl = provider.GetRequiredService<IOptions<ApiBaseUrl>>().Value;
+                return new MessageOfUsersDbService(apiBaseUrl);
+            });
         }
     }
 }

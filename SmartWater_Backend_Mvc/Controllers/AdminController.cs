@@ -20,50 +20,79 @@ namespace SmartWater_Backend_Mvc.Controllers
             _ownerDbService = ownerDbService;
             _regionConsumptionDbService = regionConsumptionDbService;
         }
-        
+       
         public async Task<IActionResult> AdminDashboard()
         {
-            List<RegionConsumption> regions = await GetRegionConsumptions();
-            WaterSimulationEngine _simulationEngine = new WaterSimulationEngine();
-            _ = Task.Run(async () =>
+            try
             {
-                await _simulationEngine.RunSimulation();
-                regions = await GetRegionConsumptions();
-                return View(regions);
-            });
-            return View(regions);
+                WaterSimulationEngine _simulationEngine = new WaterSimulationEngine();
+                _ = Task.Run(async () =>
+                {
+                    await _simulationEngine.RunSimulation();
+                });
+                return View(await GetRegionConsumptions());
+            }
+            catch (Exception ex)
+            {
+                ViewData["Message"] = ex.Message;
+                return View(await GetRegionConsumptions());
+            }
         }
 
         [HttpGet]
         public async Task<IActionResult> Owners()
         {
-            var ownersList = await GetCitezens();
-            return View(ownersList);
+            try
+            {
+                return View(await GetCitezens());
+
+            }
+            catch (Exception ex)
+            {
+                ViewData["Message"] = ex.Message;
+                return View(await GetCitezens());
+            }
         }
 
         [HttpGet]
         public async Task<IActionResult> DownloadOwnersReport()
         {
-            var data = await GetCitezens();
-            var csvBuilder = new StringBuilder();
-
-            csvBuilder.AppendLine("Owner ID,Name,Account Number,Email,Phone,Sub-Region,Outstanding Balance,Status");
-
-            foreach (var owner in data)
+            try
             {
-                string status = owner.IsPaid ? "Paid" : "Unpaid";
-                csvBuilder.AppendLine($"{owner.OwnerId_Number},{owner.OwnerName},{owner.Account_Number},{owner.Email},{owner.Phone},{owner.SubRegionName},R{owner.OutstandingBalance.ToString("F2")},{status}");
-            }
+                var data = await GetCitezens();
+                var csvBuilder = new StringBuilder();
 
-            byte[] buffer = Encoding.UTF8.GetBytes(csvBuilder.ToString());
-            return File(buffer, "text/csv", "SmartWater_Owners_Payment_Report.csv");
+                csvBuilder.AppendLine("Owner ID,Name,Account Number,Email,Phone,Sub-Region,Outstanding Balance,Status");
+
+                foreach (var owner in data)
+                {
+                    string status = owner.IsPaid ? "Paid" : "Unpaid";
+                    csvBuilder.AppendLine($"{owner.OwnerId_Number},{owner.OwnerName},{owner.Account_Number},{owner.Email},{owner.Phone},{owner.SubRegionName},R{owner.OutstandingBalance.ToString("F2")},{status}");
+                }
+
+                byte[] buffer = Encoding.UTF8.GetBytes(csvBuilder.ToString());
+                return File(buffer, "text/csv", "SmartWater_Owners_Payment_Report.csv");
+            }
+            catch (Exception ex)
+            {
+                ViewData["Message"] = ex.Message;
+                return View(await GetCitezens());
+            }
         }
 
         [HttpGet]
         public  async Task<IActionResult> Employees()
         {
-            List<Employee> employees = await GetAllEmployees();
-            return View(employees);
+            try
+            {
+                return View(await GetAllEmployees());
+
+            }
+            catch (Exception ex)
+            {
+                ViewData["Message"] = ex.Message;
+                return View(await GetAllEmployees());
+            }
         }
 
         [HttpGet]
@@ -75,85 +104,112 @@ namespace SmartWater_Backend_Mvc.Controllers
         [HttpPost]
         public async Task<IActionResult> AddEmployee(Employee employee)
         {
-            if(ModelState.IsValid)
+            try
             {
-                List<Employee> employees = await GetAllEmployees();
-                employee.Employer_Number = CreateEmployeeNumber(employees.Count);
-                var employeeToAdd = CreateDbEmployeeModel(employee);
-                var response = await _employeeDbService.AddEmployee(employeeToAdd);
-                if(response.IsSuccess)
+                if (ModelState.IsValid)
                 {
-                    employees = await GetAllEmployees();
-                    string createEmployeeLoginAccount =  await RegisterEmployee(employee);
-                    if(createEmployeeLoginAccount == "User registered sucsfuly.")
-                        return View("Employees", employees);
+                    List<Employee> employees = await GetAllEmployees();
+                    employee.Employer_Number = CreateEmployeeNumber(employees.Count);
+                    var employeeToAdd = CreateDbEmployeeModel(employee);
+                    var response = await _employeeDbService.AddEmployee(employeeToAdd);
+                    if (response.IsSuccess)
+                    {
+                        employees = await GetAllEmployees();
+                        string createEmployeeLoginAccount = await RegisterEmployee(employee);
+                        if (createEmployeeLoginAccount == "User registered sucsfuly.")
+                            return View("Employees", employees);
 
-                    ViewData["Message"] = createEmployeeLoginAccount + "\n Unable to create a new employee account right now, please rty to add him/her manualy on the database. Employe details has been add succesful.";
-                    return View();
+                        ViewData["Message"] = createEmployeeLoginAccount + "\n Unable to create a new employee account right now, please rty to add him/her manualy on the database. Employe details has been add succesful.";
+                        return View();
+                    }
+                    ViewData["Message"] = response.Message;
+                    return View(employee);
                 }
-                ViewData["Message"] = response.Message;
                 return View(employee);
             }
-            return View(employee);
+            catch (Exception ex)
+            {
+                ViewData["Message"] = ex.Message;
+                return View(employee);
+            }
         }
 
         [HttpGet]
         public async Task<IActionResult> EditEmployee(string id)
         {
-            List<Employee> employees = await GetAllEmployees();
-            var employee = employees.FirstOrDefault(x => x.Employer_Number == id);
-            return View(employee);
+            try
+            {
+                List<Employee> employees = await GetAllEmployees();
+                var employee = employees.FirstOrDefault(x => x.Employer_Number == id);
+                if(employee == null)
+                {
+                    ViewData["Message"] = "Employee not found.";
+                    return View("Employees", employees);
+                }
+                return View(employee);
+            }
+            catch (Exception ex)
+            {
+                ViewData["Message"] = ex.Message;
+                return View("Employees", await GetAllEmployees());
+            }
         }
 
         [HttpPost]
         public async Task<IActionResult> EditEmployee(Employee employee)
         {
-            if (ModelState.IsValid)
+            try
             {
-                var employeeDb = new Smart_Water_Consumption_Service.Models.Employee
+                if (ModelState.IsValid)
                 {
-                    EmployeeIdNumber = employee.Employer_IdNumber ?? string.Empty,
-                    Employee_Number = employee.Employer_Number ?? string.Empty,
-                    EmployeeAddress = employee.Employee_Address ?? string.Empty,
-                    EmployeeEmail = employee.Employer_Email ?? string.Empty,
-                    EmployeePhone = employee.Employer_PhoneNumber ?? string.Empty,
-                    EmployeeFullNames = employee.Employee_FullNames ?? string.Empty,
-                    EmployeeRole = employee.Employer_Role ?? string.Empty
-                };
-                var response = await _employeeDbService.EditEmployee(employeeDb);
-                if(response.IsSuccess)
-                {
-                    List<Employee> Newemployees = await GetAllEmployees();
-                    return View("Employees", Newemployees);
+                    var employeeDb = new Smart_Water_Consumption_Service.Models.Employee
+                    {
+                        EmployeeIdNumber = employee.Employer_IdNumber ?? string.Empty,
+                        Employee_Number = employee.Employer_Number ?? string.Empty,
+                        EmployeeAddress = employee.Employee_Address ?? string.Empty,
+                        EmployeeEmail = employee.Employer_Email ?? string.Empty,
+                        EmployeePhone = employee.Employer_PhoneNumber ?? string.Empty,
+                        EmployeeFullNames = employee.Employee_FullNames ?? string.Empty,
+                        EmployeeRole = employee.Employer_Role ?? string.Empty
+                    };
+                    var response = await _employeeDbService.EditEmployee(employeeDb);
+                    if (response.IsSuccess)
+                    {
+                        List<Employee> Newemployees = await GetAllEmployees();
+                        return View("Employees", Newemployees);
+                    }
+                    ViewData["Message"] = response.Message;
+                    return View(employee);
                 }
-                ViewData["Message"] = response.Message;
                 return View(employee);
             }
-            return View(employee);
+            catch (Exception ex)
+            {
+                ViewData["Message"] = ex.Message;
+                return View(employee);
+            }
         }
 
         [HttpGet]
         public async Task<IActionResult> DeleteEmployee(string id)
         {
-            var response = await _employeeDbService.DeleteEmployee(id);
-            if(response.IsSuccess)
+            try
             {
-                List<Employee> NEWemployees = await GetAllEmployees();
-                return View("Employees", NEWemployees);
+                var response = await _employeeDbService.DeleteEmployee(id);
+                if (response.IsSuccess)
+                {
+                    List<Employee> NEWemployees = await GetAllEmployees();
+                    return View("Employees", NEWemployees);
+                }
+                List<Employee> employees = await GetAllEmployees();
+                return View("Employees", employees);
             }
-            List<Employee> employees = await GetAllEmployees();
-            return View("Employees", employees);
-        }
-        private List<Owner> GetMockOwnersData()
-        {
-            return new List<Owner>
+            catch(Exception ex)
             {
-                new Owner { OwnerId_Number = "101", OwnerName = "M.K. Naidoo", Account_Number = "ACC678910", Email = "naidoo@example.com", Phone = "0315551234", SubRegionName = "West Street", OutstandingBalance = 450.00 },
-                new Owner { OwnerId_Number = "102", OwnerName = "S. Khumalo", Account_Number = "ACC112131", Email = "khumalo@example.com", Phone = "0315555678", SubRegionName = "Anton Lembede", OutstandingBalance = 0.00 },
-                new Owner { OwnerId_Number = "103", OwnerName = "J. Smith", Account_Number = "ACC161718", Email = "smith@example.com", Phone = "0315559012", SubRegionName = "Grey Street", OutstandingBalance = 870.50 },
-                new Owner { OwnerId_Number = "104", OwnerName = "A. Zondi", Account_Number = "ACC222324", Email = "zondi@example.com", Phone = "0315553456", SubRegionName = "West Street", OutstandingBalance = 0.00 }
-            };
-        }   
+                ViewData["Message"] = ex.Message;
+                return View("Employees", await GetAllEmployees());
+            }
+        } 
 
         private  async Task<List<Models.Employee>> GetAllEmployees()
         {
@@ -240,7 +296,7 @@ namespace SmartWater_Backend_Mvc.Controllers
                 Phone = x.Owner_PhoneNumber ?? string.Empty,
                 SubRegionName = x.Sub_RegionName ?? string.Empty,
                 OwnerId_Number = x.Owner_IdNumber ?? string.Empty,
-                HouseId = int.Parse(x.Household_ID),
+                HouseId = int.Parse(x.Household_ID ?? "0"),
                 PropertyValue = x.PropertyValue,
                 OutstandingBalance = 0.00,
                 

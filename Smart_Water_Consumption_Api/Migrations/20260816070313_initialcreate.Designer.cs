@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Smart_Water_Consumption_Api.Models.Db;
@@ -11,37 +12,43 @@ using Smart_Water_Consumption_Api.Models.Db;
 namespace Smart_Water_Consumption_Api.Migrations
 {
     [DbContext(typeof(SmartWaterCnsumptionDbContentext))]
-    [Migration("20260703070418_initialcreate")]
+    [Migration("20260816070313_initialcreate")]
     partial class initialcreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.9");
+            modelBuilder
+                .HasAnnotation("ProductVersion", "10.0.9")
+                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+
+            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
             modelBuilder.Entity("Smart_Water_Consumption_Api.Models.Appliance", b =>
                 {
                     b.Property<int>("Appliance_Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Appliance_Id"));
 
                     b.Property<string>("Appliance_MeterNumber")
                         .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Appliance_Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int>("NumberOfPeopleUsingIt")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<string>("Owner_AccountNumber")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Appliance_Id");
 
@@ -52,42 +59,44 @@ namespace Smart_Water_Consumption_Api.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Account")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Appliance_Id")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<string>("Appliance_Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<double?>("Cost")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<string>("Daily_Status")
                         .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<double?>("Daily_Usage")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<DateTime?>("Date")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<double?>("Leakage_Percent")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<string>("Night_Status")
                         .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<double?>("Night_Usage")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.HasKey("Id");
 
@@ -98,68 +107,106 @@ namespace Smart_Water_Consumption_Api.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
-                    b.Property<double>("ActualConsumptionKl")
-                        .HasColumnType("REAL");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<double>("ActualMonthConsumptionKl")
+                        .HasColumnType("float");
 
                     b.Property<string>("Appliance_Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(100)");
 
-                    b.Property<double>("EstimatedCost")
-                        .HasColumnType("REAL");
+                    b.Property<double>("EstimatedHourCost")
+                        .HasColumnType("float");
+
+                    b.Property<double>("EstimatedMonthCost")
+                        .HasColumnType("float");
+
+                    b.Property<double>("EstimatedWeekCost")
+                        .HasColumnType("float");
 
                     b.Property<DateTime>("MonthYear")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Owner_AccountNumber")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<double>("PredictedConsumptionKl")
-                        .HasColumnType("REAL");
+                    b.Property<double>("PredictedHourConsumptionKl")
+                        .HasColumnType("float");
+
+                    b.Property<double>("PredictedMonthConsumptionKl")
+                        .HasColumnType("float");
+
+                    b.Property<double>("PredictedWeekConsumptionKl")
+                        .HasColumnType("float");
 
                     b.HasKey("Id");
 
                     b.ToTable("AppliancePredictions");
                 });
 
+            modelBuilder.Entity("Smart_Water_Consumption_Api.Models.ChatMessage", b =>
+                {
+                    b.Property<int>("ChatId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ChatId"));
+
+                    b.Property<string>("ChatTitle")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("ChatId");
+
+                    b.ToTable("ChatMessages");
+                });
+
             modelBuilder.Entity("Smart_Water_Consumption_Api.Models.Employee", b =>
                 {
                     b.Property<string>("Employee_Number")
                         .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("EmployeeAddress")
                         .HasMaxLength(250)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(250)");
 
                     b.Property<string>("EmployeeEmail")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("EmployeeFullNames")
                         .IsRequired()
                         .HasMaxLength(150)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(150)");
 
                     b.Property<string>("EmployeeIdNumber")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("EmployeePhone")
                         .IsRequired()
                         .HasMaxLength(15)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(15)");
 
                     b.Property<string>("EmployeeRole")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(30)");
 
                     b.HasKey("Employee_Number");
 
@@ -170,57 +217,59 @@ namespace Smart_Water_Consumption_Api.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<double?>("Actual_Amount")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<double?>("Daily_Usage")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<DateTime?>("Date")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<double?>("Extepected_Amount")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<double?>("FreeWater")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<string>("Household_ID")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<double?>("Leakage_Percent")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<double?>("Night_Usage")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<double?>("OutStanding_Amount")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<string>("Owner_AccountNumber")
                         .IsRequired()
                         .HasMaxLength(10)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(10)");
 
                     b.Property<string>("Payment_Status")
                         .HasMaxLength(30)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(30)");
 
                     b.Property<double?>("Spike_Usage")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<int?>("Sub_RegionId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<double?>("Total_WaterUsed")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<double?>("Water_Received")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.HasKey("Id");
 
@@ -231,23 +280,43 @@ namespace Smart_Water_Consumption_Api.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("AccountNumber")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<double>("ActualConsumptionKl")
-                        .HasColumnType("REAL");
+                    b.Property<double>("ActualHourConsumptionKl")
+                        .HasColumnType("float");
 
-                    b.Property<double>("EstimatedCost")
-                        .HasColumnType("REAL");
+                    b.Property<double>("ActualMonthConsumptionKl")
+                        .HasColumnType("float");
+
+                    b.Property<double>("EstimatedHourCost")
+                        .HasColumnType("float");
+
+                    b.Property<double>("EstimatedMonthCost")
+                        .HasColumnType("float");
+
+                    b.Property<double>("EstimatedWeekCost")
+                        .HasColumnType("float");
 
                     b.Property<DateTime>("MonthYear")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
-                    b.Property<double>("PredictedConsumptionKl")
-                        .HasColumnType("REAL");
+                    b.Property<double>("PredictedHourConsumptionKl")
+                        .HasColumnType("float");
+
+                    b.Property<double>("PredictedMonthConsumptionKl")
+                        .HasColumnType("float");
+
+                    b.Property<double>("PredictedWeekConsumptionKl")
+                        .HasColumnType("float");
+
+                    b.Property<int>("SubRegionId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -258,131 +327,114 @@ namespace Smart_Water_Consumption_Api.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Account_Number")
                         .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Email_Address")
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("FullNames")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Password")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("Phone_Number")
                         .HasMaxLength(12)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(12)");
 
                     b.Property<string>("Role")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(30)");
 
                     b.Property<string>("Staff_Id")
                         .HasMaxLength(6)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(6)");
 
                     b.HasKey("Id");
 
                     b.ToTable("Logins");
                 });
 
-            modelBuilder.Entity("Smart_Water_Consumption_Api.Models.ModelTrainingPayload", b =>
+            modelBuilder.Entity("Smart_Water_Consumption_Api.Models.MessageOfUser", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
-                    b.Property<string>("Account")
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ChatId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsUser")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Message")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("ApplianceActive_Id")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Appliance_Name")
+                    b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<double>("LeakageProbability")
-                        .HasColumnType("REAL");
-
-                    b.Property<double>("PauseTimeMinutes")
-                        .HasColumnType("REAL");
-
-                    b.Property<DateTime>("StartTime")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("StopedTime")
-                        .HasColumnType("TEXT");
-
-                    b.Property<double>("TimeItWasNotRunning")
-                        .HasColumnType("REAL");
-
-                    b.Property<double>("TotalDurationMinutes")
-                        .HasColumnType("REAL");
-
-                    b.Property<double>("WaterUsed")
-                        .HasColumnType("REAL");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("ModelTrainingPayloads");
+                    b.ToTable("MessageOfUsers");
                 });
 
             modelBuilder.Entity("Smart_Water_Consumption_Api.Models.Owner", b =>
                 {
                     b.Property<string>("Owner_IdNumber")
                         .HasMaxLength(13)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(13)");
 
                     b.Property<string>("Household_ID")
                         .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Owner_AccountNumber")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Owner_Email")
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Owner_MeterNumber")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Owner_Name")
                         .IsRequired()
                         .HasMaxLength(150)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(150)");
 
                     b.Property<string>("Owner_PhoneNumber")
                         .HasMaxLength(15)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(15)");
 
                     b.Property<string>("PropertyValue")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("Sub_RegionId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<string>("Sub_RegionName")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Owner_IdNumber");
 
@@ -393,24 +445,26 @@ namespace Smart_Water_Consumption_Api.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Account_Number")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<double>("Amount_Outstanding")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<double>("Amount_Owing")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<double>("Amount_Payed")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<DateTime?>("Date")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
@@ -421,15 +475,17 @@ namespace Smart_Water_Consumption_Api.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Region_Meter")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Region_Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
@@ -440,51 +496,53 @@ namespace Smart_Water_Consumption_Api.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<double?>("Actual_Amount")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<double?>("Daily_Usage")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<DateTime?>("Date")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<double?>("Extepected_Amount")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<double?>("FreeWater")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<double?>("Leakage_Percent")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<double?>("Night_Usage")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<double?>("OutStanding_Amount")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<double?>("OutstandingWater")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<int>("Region_Id")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<string>("Region_Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<double?>("Spike_Usage")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<double?>("Water_Payed")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<double?>("Water_Sent")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.HasKey("Id");
 
@@ -495,26 +553,40 @@ namespace Smart_Water_Consumption_Api.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
-                    b.Property<double>("ActualConsumptionKl")
-                        .HasColumnType("REAL");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<double>("EstimatedCost")
-                        .HasColumnType("REAL");
+                    b.Property<double>("ActualMonthConsumptionKl")
+                        .HasColumnType("float");
+
+                    b.Property<double>("EstimatedHourCost")
+                        .HasColumnType("float");
+
+                    b.Property<double>("EstimatedMonthCost")
+                        .HasColumnType("float");
+
+                    b.Property<double>("EstimatedWeekCost")
+                        .HasColumnType("float");
 
                     b.Property<DateTime>("MonthYear")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
-                    b.Property<double>("PredictedConsumptionKl")
-                        .HasColumnType("REAL");
+                    b.Property<double>("PredictedHourConsumptionKl")
+                        .HasColumnType("float");
+
+                    b.Property<double>("PredictedMonthConsumptionKl")
+                        .HasColumnType("float");
+
+                    b.Property<double>("PredictedWeekConsumptionKl")
+                        .HasColumnType("float");
 
                     b.Property<int>("RegionId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<string>("RegionName")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -525,26 +597,43 @@ namespace Smart_Water_Consumption_Api.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
-                    b.Property<double>("ActualConsumptionKl")
-                        .HasColumnType("REAL");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<double>("EstimatedCost")
-                        .HasColumnType("REAL");
+                    b.Property<double>("ActualMonthConsumptionKl")
+                        .HasColumnType("float");
+
+                    b.Property<double>("EstimatedHourCost")
+                        .HasColumnType("float");
+
+                    b.Property<double>("EstimatedMonthCost")
+                        .HasColumnType("float");
+
+                    b.Property<double>("EstimatedWeekCost")
+                        .HasColumnType("float");
 
                     b.Property<DateTime>("MonthYear")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
-                    b.Property<double>("PredictedConsumptionKl")
-                        .HasColumnType("REAL");
+                    b.Property<double>("PredictedHourConsumptionKl")
+                        .HasColumnType("float");
+
+                    b.Property<double>("PredictedMonthConsumptionKl")
+                        .HasColumnType("float");
+
+                    b.Property<double>("PredictedWeekConsumptionKl")
+                        .HasColumnType("float");
+
+                    b.Property<int>("RegionId")
+                        .HasColumnType("int");
 
                     b.Property<int>("SubRegionId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<string>("SubRegionName")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -555,24 +644,26 @@ namespace Smart_Water_Consumption_Api.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int?>("RegionId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<string>("RegionName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("SubRegionName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("SubRegion_Meter")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -583,54 +674,56 @@ namespace Smart_Water_Consumption_Api.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<double?>("Actual_Amount")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<double?>("Daily_Usage")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<DateTime?>("Date")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<double?>("Extepected_Amount")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<double?>("FreeWater")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<double?>("Leakage_Percent")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<double?>("Night_Usage")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<double?>("OutStanding_Amount")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<double?>("OutstandingWater")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<int>("RegionId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<double?>("Spike_Usage")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<int>("Sub_RegionId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<string>("Sub_RegionName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<double?>("Water_Payed")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<double?>("Water_Sent")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.HasKey("Id");
 

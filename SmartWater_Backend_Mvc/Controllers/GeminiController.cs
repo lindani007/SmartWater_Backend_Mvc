@@ -3,6 +3,7 @@ using Smart_Water_Consumption_Service.Services.AiService.DeepLearningModel;
 using Smart_Water_Consumption_Service.Services.DbServices;
 using SmartWater_Backend_Mvc.Models;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace SmartWater_Backend_Mvc.Controllers
 {
@@ -11,389 +12,100 @@ namespace SmartWater_Backend_Mvc.Controllers
         private readonly RegionConsumptionDbService _regionConsumptionDbService;
         private readonly Sub_RegionConsumptionDbService _subregionConsumptionDbService;
         private readonly HouseConsumptionDbService _houseConsumptionDbService;
-        private GeminiCore _geminiCore;
-        public GeminiController(RegionConsumptionDbService regionConsumptionDbService1, Sub_RegionConsumptionDbService sub_RegionConsumptionDbService, HouseConsumptionDbService houseConsumptionDbService)
+        private MyLLMAiService _myAi;
+
+        private readonly EmployeeDbService _employeeDbService;
+        private readonly ChatMessagesDbService _chatMessagesDbService;
+        private readonly MessageOfUsersDbService _messageOfUsersDbService;
+        public GeminiController( MyLLMAiService myAi, RegionConsumptionDbService regionConsumptionDbService1, Sub_RegionConsumptionDbService sub_RegionConsumptionDbService, HouseConsumptionDbService houseConsumptionDbService, EmployeeDbService employeeDbService, ChatMessagesDbService chatMessagesDbService, MessageOfUsersDbService messageOfUsersDbService)
         {
             _houseConsumptionDbService = houseConsumptionDbService;
             _regionConsumptionDbService = regionConsumptionDbService1;
             _subregionConsumptionDbService = sub_RegionConsumptionDbService;
-            _geminiCore = new GeminiCore();
+            _myAi = myAi;
+            _employeeDbService = employeeDbService;
+            _chatMessagesDbService = chatMessagesDbService;
+            _messageOfUsersDbService = messageOfUsersDbService;
         }
 
         [HttpGet]
-        public async Task<IActionResult> SummarizeAdminRegionsReport()
+        public async Task<IActionResult> DropWiseAi(int? chatId)
         {
-            var chatHistory = new List<ChatMessage>();
-            ChatMessage userMassege = new ChatMessage
-            {
-                IsUser = true,
-                Message = "Summarize admin report"
-            };
-            chatHistory.Add(userMassege);
-            chatHistory.Add(new ChatMessage
-            {
-                IsUser = false,
-                Message = @"The regional infrastructure assessment indicates stable operational performance across all monitored regions with no significant leakage currently detected. Water supplied matches water paid in every region, resulting in zero outstanding water losses and no measurable non-revenue water at this reporting interval.
-
-From an engineering perspective, Musgrave (18.19 kL) and Umngeni (17.49 kL) recorded the highest distribution volumes and should remain priority monitoring zones due to their larger infrastructure demand. Durban North, Durban Central, and Brea are operating within expected consumption ranges with no abnormal supply imbalance or leakage indicators observed. Night-time consumption exceeds daytime usage across every region, suggesting expected overnight demand patterns; however, continued monitoring is recommended to detect any future abnormal increases that may indicate hidden leaks.
-
-Financial analysis shows strong revenue performance. Regions exceeding the municipal free-water allocation generated billable revenue, with Umngeni producing approximately R362.33 and Musgrave approximately R255.74. All billed amounts have been fully recovered, leaving no outstanding municipal revenue at risk during this reporting period.
-
-Overall municipal network health is currently classified as Low Risk. No immediate engineering intervention or emergency maintenance deployment is required. The recommended operational strategy is continued predictive monitoring, routine infrastructure inspections, and proactive surveillance of high-volume distribution regions to ensure early detection of future anomalies before they develop into costly infrastructure failures or revenue losses.
-
-Executive Summary
-
-Overall Network Status: Operationally Stable
-Infrastructure Risk: Low
-Leakage Risk: None Detected
-Revenue Collection: 100%
-Outstanding Water Loss: 0 kL
-Priority Monitoring Regions: Musgrave and Umngeni"
-            });
-            return PartialView("AiView", chatHistory);
-
-
-
-
-            
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> SummarizeEngineeringReport()
-        {
-            var chatHistory = new List<ChatMessage>();
-            string engineeringSystemPrompt = @"You are the Chief Hydraulics and Water Infrastructure Engineering Analyst. 
-
-                            ### CONTEXT:
-                            The user interface already displays the complete structural data tables, telemetry matrices, and raw metrics. Do NOT recreate data tables, do NOT define simple terms, and do NOT output raw LaTeX equations (like $$ or $ tokens). 
-
-                            ### OBJECTIVE:
-                            Provide a concise, formal, high-level engineering interpretation of the data payload. Your response should read as a direct executive brief for field deployment teams who need to know exactly what the data implies for infrastructure integrity.
-
-                            ### KEY PROTOCOLS:
-                            - **Conciseness**: Keep the response short, clear, and direct. Focus purely on actionable interpretations.
-                            - **Tone**: Strictly professional, formal engineering notation, authoritative, and data-grounded.
-                            - **Scope**: Target critical anomalies only (e.g., specific distribution mains vs. terminal line ruptures indicated by night flow anomalies).
-                            - **Mandatory Guardrail**: Do NOT mention financial data, currencies, or costs under any circumstances.";
-
-            string userPrompt = "Provide a formal, concise engineering interpretation of the current hydraulic network payload. Highlight the exact structural implications of the highest anomalies and state where field crews must prioritize physical line intervention.";
-
+            List<ChatMessage> chatHistory = new List<ChatMessage>();
             try
             {
-                chatHistory.Add(new ChatMessage { IsUser = true, Message = "Summarize Engineering Report" });
+                string staffId = HttpContext.Session.GetString("stuffId");
+                var staff = await _employeeDbService.GetEmployee(staffId);
 
-                var regionsTask = GetRegionConsumptions();
-                var subRegionsTask = GetAllSubRegionsConsumption();
-                var houseHoldsTask = GetAllHouseHoldConsumption();
+                // 1. Fetch saved chats for the sidebar list
+                chatHistory = await FetchAllUserChatHistory(staffId);
 
-                await Task.WhenAll(regionsTask, subRegionsTask, houseHoldsTask);
+                // 2. Default to 0 (Fresh Welcome View) if no chatId is passed in URL
+                int activeChatId = chatId ?? 0;
 
-                var contextData = new
+                // 3. Add the fresh welcome state (ChatId = 0) to the list
+                chatHistory.Add(new ChatMessage
                 {
-                    HydraulicRegions = regionsTask.Result,
-                    HydraulicSubRegions = subRegionsTask.Result,
-                    TerminalHouseholds = houseHoldsTask.Result
-                };
-                string serializedJsonData = JsonSerializer.Serialize(contextData);
-
-                string executionPrompt = $"{engineeringSystemPrompt}\n\n" +
-                                         $"### LIVE HYDRAULIC NETWORK CONTEXT PAYLOAD:\n{serializedJsonData}\n\n" +
-                                         $"### FIELD AUDIT REQUEST:\n{userPrompt}\n\n" +
-                                         $"Generate the professional brief:";
-
-                var response = await _geminiCore.GetGeminiResponse(executionPrompt);
-                chatHistory.Add(new ChatMessage { IsUser = false, Message = response });
-
-                return PartialView("AiView", chatHistory);
-            }
-            catch (Exception ex)
+                    ChatId = 0,
+                    UserId = staffId,
+                    ChatTitle = "New Conversation",
+                    Timestamp = DateTime.Now,
+                    Message = new List<MyMessage>
             {
-                chatHistory.Add(new ChatMessage { IsUser = false, Message = $"❌ AI Engineering Pipeline Failure: {ex.Message}" });
-                return PartialView("AiView", chatHistory);
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> SummarizeFinanceReport()
-        {
-            var chatHistory = new List<ChatMessage>();
-            string financeSystemPrompt = @"You are the Chief Utility Financial Analyst.
-        ### CONTEXT:
-        The user interface already displays the high-level data tables. Do NOT recreate raw data tables or define basic accounting terminology. Do NOT output raw LaTeX equations.
-        ### OBJECTIVE:
-        Provide a concise, formal financial executive brief analyzing total systemic revenue, cost implications of unaccounted water, and financial variances. Focus heavily on billing metrics, outstanding amounts, and the financial health of the overall water network.";
-
-            string userPrompt = "Provide a high-level, concise financial assessment of the current water utility payload. Highlight total financial losses resulting from network inefficiencies and flag immediate budgetary risks.";
-
-            try
-            {
-                chatHistory.Add(new ChatMessage { IsUser = true, Message = "Summarize Finance Report" });
-
-                var regionsTask = GetRegionConsumptions();
-                var subRegionsTask = GetAllSubRegionsConsumption();
-                var houseHoldsTask = GetAllHouseHoldConsumption();
-                await Task.WhenAll(regionsTask, subRegionsTask, houseHoldsTask);
-
-                var contextData = new { HydraulicRegions = regionsTask.Result, HydraulicSubRegions = subRegionsTask.Result, TerminalHouseholds = houseHoldsTask.Result };
-                string serializedData = JsonSerializer.Serialize(contextData);
-
-                string executionPrompt = $"{financeSystemPrompt}\n\n### LIVE NETWORK FINANCIAL PAYLOAD:\n{serializedData}\n\n### EXECUTIVE AUDIT REQUEST:\n{userPrompt}\n\nGenerate the financial brief:";
-
-                var response = await _geminiCore.GetGeminiResponse(executionPrompt);
-                chatHistory.Add(new ChatMessage { IsUser = false, Message = response });
-
-                return PartialView("AiView", chatHistory);
-            }
-            catch (Exception ex)
-            {
-                chatHistory.Add(new ChatMessage { IsUser = false, Message = $"❌ AI Finance Pipeline Failure: {ex.Message}" });
-                return PartialView("AiView", chatHistory);
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> SummarizeEngineeringRegions()
-        {
-            var chatHistory = new List<ChatMessage>();
-            string engineeringPrompt = @"You are the Lead Hydraulic Infrastructure Engineer. 
-        ### CONTEXT:
-        Analyzing macro-level regional data ONLY. Do NOT build tables or output raw LaTeX tokens.
-        ### OBJECTIVE:
-        Provide a concise, formal structural brief interpreting hydraulic anomalies at the macro regional level. Identify high-risk regional zones and main transmission line pressure variations.
-        ### GUARDRAIL:
-        Do NOT mention financial data, currencies, or costs under any circumstances.";
-
-            string userPrompt = "Analyze the macro hydraulic regions. Identify which primary distribution zones exhibit structural integrity anomalies or severe bulk mass supply imbalances.";
-
-            try
-            {
-                chatHistory.Add(new ChatMessage { IsUser = true, Message = "Summarize Engineering Regions" });
-
-                var regions = await GetRegionConsumptions();
-                string serializedData = JsonSerializer.Serialize(regions);
-
-                string executionPrompt = $"{engineeringPrompt}\n\n### REGIONAL HYDRAULIC PAYLOAD:\n{serializedData}\n\n### FIELD AUDIT REQUEST:\n{userPrompt}\n\nGenerate the brief:";
-
-                var response = await _geminiCore.GetGeminiResponse(executionPrompt);
-                chatHistory.Add(new ChatMessage { IsUser = false, Message = response });
-
-                return PartialView("AiView", chatHistory);
-            }
-            catch (Exception ex)
-            {
-                chatHistory.Add(new ChatMessage { IsUser = false, Message = $"❌ AI Engineering Regions Failure: {ex.Message}" });
-                return PartialView("AiView", chatHistory);
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> SummarizeEngineeringSubRegions()
-        {
-            var chatHistory = new List<ChatMessage>();
-            string engineeringPrompt = @"You are the Lead Hydraulic Infrastructure Engineer. 
-            ### CONTEXT:
-            Analyzing sub-regional distribution networks and district metered areas (DMAs) ONLY. Do NOT build tables or output raw LaTeX tokens.
-            ### OBJECTIVE:
-            Provide a concise, formal engineering summary focusing on sub-regional line weeping, pressurized joint failures, and branch-level telemetry anomalies. 
-            ### GUARDRAIL:
-            Do NOT mention financial data, currencies, or costs under any circumstances.";
-
-            string userPrompt = "Review the sub-regional network telemetry. Pinpoint exactly which distribution branches or sub-zones show continuous minimum night flow anomalies indicating active physical line leakage.";
-
-            try
-            {
-                chatHistory.Add(new ChatMessage { IsUser = true, Message = "Summarize Engineering SubRegions" });
-
-                var subRegions = await GetAllSubRegionsConsumption();
-                string serializedData = JsonSerializer.Serialize(subRegions);
-
-                string executionPrompt = $"{engineeringPrompt}\n\n### SUB-REGIONAL HYDRAULIC PAYLOAD:\n{serializedData}\n\n### FIELD AUDIT REQUEST:\n{userPrompt}\n\nGenerate the brief:";
-
-                var response = await _geminiCore.GetGeminiResponse(executionPrompt);
-                chatHistory.Add(new ChatMessage { IsUser = false, Message = response });
-
-                return PartialView("AiView", chatHistory);
-            }
-            catch (Exception ex)
-            {
-                chatHistory.Add(new ChatMessage { IsUser = false, Message = $"❌ AI Engineering Sub-Regions Failure: {ex.Message}" });
-                return PartialView("AiView", chatHistory);
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> SummarizeEngineeringHouseholds()
-        {
-            var chatHistory = new List<ChatMessage>();
-            string engineeringPrompt = @"You are the Lead Hydraulic Infrastructure Engineer. 
-        ### CONTEXT:
-        Analyzing terminal household consumer connections and end-point accounts ONLY. Do NOT build tables or output raw LaTeX tokens.
-        ### OBJECTIVE:
-        Provide a concise engineering interpretation regarding consumer-side anomalies, domestic consumption patterns, and localized pipe fractures beyond the municipal meters.
-        ### GUARDRAIL:
-        Do NOT mention financial data, currencies, or costs under any circumstances.";
-
-            string userPrompt = "Assess the terminal household consumer payload. Identify clear patterns of structural weeping or continuous internal flow anomalies at the account level.";
-
-            try
-            {
-                chatHistory.Add(new ChatMessage { IsUser = true, Message = "Summarize Engineering Households" });
-
-                var households = await GetAllHouseHoldConsumption();
-                string serializedData = JsonSerializer.Serialize(households);
-
-                string executionPrompt = $"{engineeringPrompt}\n\n### HOUSEHOLD CONSUMPTION PAYLOAD:\n{serializedData}\n\n### FIELD AUDIT REQUEST:\n{userPrompt}\n\nGenerate the brief:";
-
-                var response = await _geminiCore.GetGeminiResponse(executionPrompt);
-                chatHistory.Add(new ChatMessage { IsUser = false, Message = response });
-
-                return PartialView("AiView", chatHistory);
-            }
-            catch (Exception ex)
-            {
-                chatHistory.Add(new ChatMessage { IsUser = false, Message = $"❌ AI Engineering Households Failure: {ex.Message}" });
-                return PartialView("AiView", chatHistory);
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> SummarizeFinanceRegions()
-        {
-            var chatHistory = new List<ChatMessage>();
-            string financePrompt = @"You are the Senior Revenue Analyst for Water Operations.
-            ### CONTEXT:
-            Analyzing financial data at the macro regional level. Do NOT build tables or output raw LaTeX tokens.
-            ### OBJECTIVE:
-            Provide a formal, concise financial brief focused on macro regional water billing, bulk distribution revenue, and large-scale non-revenue water (NRW) financial losses. Discuss amounts and revenue generation relative to regional volumetric delivery.";
-
-            string userPrompt = "Evaluate the macro regional consumption data from a financial viewpoint. Which billing zones are causing the largest non-revenue water (NRW) financial deficits?";
-
-            try
-            {
-                chatHistory.Add(new ChatMessage { IsUser = true, Message = "Summarize Finance Regions" });
-
-                var regions = await GetRegionConsumptions();
-                string serializedData = JsonSerializer.Serialize(regions);
-
-                string executionPrompt = $"{financePrompt}\n\n### REGIONAL FINANCIAL PAYLOAD:\n{serializedData}\n\n### AUDIT REQUEST:\n{userPrompt}\n\nGenerate the brief:";
-
-                var response = await _geminiCore.GetGeminiResponse(executionPrompt);
-                chatHistory.Add(new ChatMessage { IsUser = false, Message = response });
-
-                return PartialView("AiView", chatHistory);
-            }
-            catch (Exception ex)
-            {
-                chatHistory.Add(new ChatMessage { IsUser = false, Message = $"❌ AI Finance Regions Failure: {ex.Message}" });
-                return PartialView("AiView", chatHistory);
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> SummarizeFinanceSubRegions()
-        {
-            var chatHistory = new List<ChatMessage>();
-            string financePrompt = @"You are the Senior Revenue Analyst for Water Operations.
-        ### CONTEXT:
-        Analyzing sub-regional/district branch metrics. Do NOT build tables or output raw LaTeX tokens.
-        ### OBJECTIVE:
-        Provide a concise financial interpretation detailing sub-regional billing inefficiencies, unmetered water losses, and localized revenue recovery variances. Frame your fiscal analysis around water distribution volumes.";
-
-            string userPrompt = "Analyze the sub-regional data matrices to uncover direct financial impacts. Pinpoint the specific sub-regions where unmetered flow or leakage is generating critical fiscal deficits.";
-
-            try
-            {
-                chatHistory.Add(new ChatMessage { IsUser = true, Message = "Summarize Finance SubRegions" });
-
-                var subRegions = await GetAllSubRegionsConsumption();
-                string serializedData = JsonSerializer.Serialize(subRegions);
-
-                string executionPrompt = $"{financePrompt}\n\n### SUB-REGIONAL FINANCIAL PAYLOAD:\n{serializedData}\n\n### AUDIT REQUEST:\n{userPrompt}\n\nGenerate the brief:";
-
-                var response = await _geminiCore.GetGeminiResponse(executionPrompt);
-                chatHistory.Add(new ChatMessage { IsUser = false, Message = response });
-
-                return PartialView("AiView", chatHistory);
-            }
-            catch (Exception ex)
-            {
-                chatHistory.Add(new ChatMessage { IsUser = false, Message = $"❌ AI Finance Sub-Regions Failure: {ex.Message}" });
-                return PartialView("AiView", chatHistory);
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> SummarizeFinanceHouseholds()
-        {
-            var chatHistory = new List<ChatMessage>();
-            string financePrompt = @"You are the Senior Revenue Analyst for Water Operations.
-    ### CONTEXT:
-    Analyzing terminal household end-point consumption accounts. Do NOT build tables or output raw LaTeX tokens.
-    ### OBJECTIVE:
-    Provide a concise, formal financial brief regarding consumer billing profiles, outstanding accounts, payment variances, and the direct cash flow impact of household water usage anomalies.";
-
-            string userPrompt = "Audit the terminal household consumption payload from a revenue perspective. Highlight extreme account-level anomalies, outstanding amounts, and customer-side non-payment risks.";
-
-            try
-            {
-                chatHistory.Add(new ChatMessage { IsUser = true, Message = "Summarize Finance Households" });
-
-                var households = await GetAllHouseHoldConsumption();
-                string serializedData = JsonSerializer.Serialize(households);
-
-                string executionPrompt = $"{financePrompt}\n\n### HOUSEHOLD FINANCIAL PAYLOAD:\n{serializedData}\n\n### AUDIT REQUEST:\n{userPrompt}\n\nGenerate the brief:";
-
-                var response = await _geminiCore.GetGeminiResponse(executionPrompt);
-                chatHistory.Add(new ChatMessage { IsUser = false, Message = response });
-
-                return PartialView("AiView", chatHistory);
-            }
-            catch (Exception ex)
-            {
-                chatHistory.Add(new ChatMessage { IsUser = false, Message = $"❌ AI Finance Households Failure: {ex.Message}" });
-                return PartialView("AiView", chatHistory);
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> QueryDatabasePrompt(string prompt)
-        {
-            var chatHistory = new List<ChatMessage>();
-            try
-            {
-                if (string.IsNullOrWhiteSpace(prompt))
+                new MyMessage
                 {
-                    chatHistory.Add(new ChatMessage { IsUser = false, Message = "System Error: Prompt parameter cannot be empty." });
-                    return PartialView("AiView", chatHistory);
+                    IsUser = false,
+                    Message = $"Welcome {staff?.Data?.EmployeeFullNames ?? "User"}! How can I assist you with the water infrastructure today?"
                 }
+            }
+                });
 
-                chatHistory.Add(new ChatMessage { IsUser = true, Message = prompt });
+                ViewBag.ActiveChatId = activeChatId;
+                return PartialView("AiView", chatHistory);
+            }
+            catch
+            {
+                return PartialView("AiView", chatHistory);
+            }
+        }
 
-                string analyticalSystemPrompt = @"You are the Chief Hydraulics and Water Infrastructure Engineering Assistant.
+        [HttpGet]
+        public async Task<IActionResult> QueryDatabasePrompt(string prompt, int chatId = 0)
+        {
+            string staffId = HttpContext.Session.GetString("stuffId");
+            var staff = await _employeeDbService.GetEmployee(staffId);
 
-                    ### CONTEXT:
-                    The user interface is currently displaying live structural engineering data tables, mass-balance calculations, and telemetry metrics to the operator. Do NOT recreate markdown data tables, do NOT define simple baseline terms, and do NOT output raw LaTeX math equation tokens (such as $$ or $).
+            if (string.IsNullOrWhiteSpace(prompt))
+            {
+                var currentHistory = await FetchAllUserChatHistory(staffId);
+                ViewBag.ActiveChatId = chatId;
+                return PartialView("AiView", currentHistory);
+            }
 
-                    ### OBJECTIVE:
-                    Analyze the user's specific request or query regarding the network infrastructure. Provide a formal, highly concise, and data-grounded response. Focus directly on the engineering, structural, or operational implications of their query.
+            try
+            {
+                string analyticalSystemPrompt = $@"
+        You are DropWise Intelligence, an AI assistant for a municipal water infrastructure management system.
 
-                    ### PROTOCOLS:
-                    1. **Conciseness**: Deliver the assessment in a short, punchy paragraph or highly compact bullet points.
-                    2. **Tone**: Strictly professional, authoritative, and structured for engineering teams.
-                    3. **Safety Guardrail**: Absolutely do NOT mention financial values, costs, or currency under any circumstances.";
+        ### CURRENT EMPLOYEE
+        Name: {staff.Data.EmployeeFullNames}
+        Role: {staff.Data.EmployeeRole}
 
-                var regionsTask = GetRegionConsumptions();
-                var subRegionsTask = GetAllSubRegionsConsumption();
-                var houseHoldsTask = GetAllHouseHoldConsumption();
+        ### ROLE-SPECIFIC RESPONSIBILITY
+        {GetRoleProfile(staff.Data.EmployeeRole)}
 
-                await Task.WhenAll(regionsTask, subRegionsTask, houseHoldsTask);
+        ### GENERAL CONTEXT
+        The interface already displays live water infrastructure data.
+        Do NOT recreate raw data tables.
+        Do NOT define basic terminology.
+        Do NOT output raw LaTeX equations.
 
-                var contextData = new
-                {
-                    HydraulicRegions = regionsTask.Result,
-                    HydraulicSubRegions = subRegionsTask.Result,
-                    TerminalHouseholds = houseHoldsTask.Result
-                };
+        ### OBJECTIVE
+        Answer the employee's question using supplied data directly and concisely.
+        ";
+
+                var mydata = await GetFullHydraulicHierarchyAsync();
+                var contextData = new { HydraulicRegions = mydata };
                 string serializedJsonData = JsonSerializer.Serialize(contextData);
 
                 string executionPrompt = $"{analyticalSystemPrompt}\n\n" +
@@ -401,95 +113,274 @@ Priority Monitoring Regions: Musgrave and Umngeni"
                                          $"### FIELD AUDIT REQUEST:\n{prompt}\n\n" +
                                          $"Generate the professional brief:";
 
-                GeminiCore geminiCore = new GeminiCore();
-                var response = await geminiCore.GetGeminiResponse(executionPrompt);
-                chatHistory.Add(new ChatMessage { IsUser = false, Message = response });
 
-                return PartialView("AiView", chatHistory);
+                var response = await _myAi.GetLLMResponse(executionPrompt);
+
+                
+                int activeChatId = chatId;
+                if (activeChatId == 0)
+                {
+                    Smart_Water_Consumption_Service.Models.ChatMessage newChatMessage = new Smart_Water_Consumption_Service.Models.ChatMessage
+                    {
+                        UserId = staffId,
+                        ChatTitle = GenerateChatTitle(prompt),
+                        Timestamp = DateTime.Now
+                    };
+                    var newChatResult = await _chatMessagesDbService.AddChatMessage(newChatMessage);
+                    activeChatId = newChatResult.Data.ChatId;
+                }
+                var newUserMessage = new Smart_Water_Consumption_Service.Models.MessageOfUser
+                {
+                    ChatId = activeChatId,
+                    IsUser = true,
+                    Message = prompt,
+                    UserId = staffId
+                };
+                await _messageOfUsersDbService.AddMessageOfUser(newUserMessage);
+                var newAiMessage = new Smart_Water_Consumption_Service.Models.MessageOfUser
+                {
+                    ChatId = activeChatId,
+                    IsUser = false,
+                    Message = response,
+                    UserId = staffId
+                };
+                await _messageOfUsersDbService.AddMessageOfUser(newAiMessage);
+
+                var updatedHistory = await FetchAllUserChatHistory(staffId);
+
+                ViewBag.ActiveChatId = activeChatId;
+                return PartialView("AiView", updatedHistory);
             }
             catch (Exception ex)
             {
-                chatHistory.Add(new ChatMessage { IsUser = false, Message = $"❌ AI Engineering Pipeline Failure: {ex.Message}" });
-                return PartialView("AiView", chatHistory);
+                var fallbackHistory = await FetchAllUserChatHistory(staffId);
+                var activeChat = fallbackHistory.FirstOrDefault(c => c.ChatId == chatId);
+                if (activeChat != null)
+                {
+                    activeChat.Message.Add(new MyMessage { IsUser = true, Message = prompt });
+                    activeChat.Message.Add(new MyMessage { IsUser = false, Message = $"❌ AI Engineering Pipeline Failure: {ex.Message}" });
+                }
+                ViewBag.ActiveChatId = chatId;
+                return PartialView("AiView", fallbackHistory);
             }
         }
-        private async Task<List<RegionConsumption>> GetRegionConsumptions()
+
+        private async Task<List<ChatMessage>> FetchAllUserChatHistory(string staffId)
         {
-            var response = await _regionConsumptionDbService.GetAllRegionsConsumptions();
-            var regions = response.Data.Select(x => new RegionConsumption
+            List<ChatMessage> chatHistory = new List<ChatMessage>();
+            var chats = await _chatMessagesDbService.GetAllUseChatMessage(staffId);
+
+            if (chats?.Data != null && chats.Data.Any())
             {
-                Region_Id = x.Region_Id,
-                Water_Sent = x.Water_Sent.Value,
-                Water_Used = x.Water_Payed.Value,
-                Water_Thats_OutStanding = x.OutstandingWater.Value,
-                Daily_Usage = x.Daily_Usage,
-                Night_Usage = x.Night_Usage,
-                Spike_Usage = x.Spike_Usage,
-                Leakage_Propability = x.Leakage_Percent.Value,
-                Consumption_Month = x.Date.Value,
-                FreeWater = x.FreeWater,
-                Region_Name = x.Region_Name,
-            }).ToList();
-            return regions;
+                foreach (var x in chats.Data)
+                {
+                    var messagesList = await GetAllChatMessages(x.ChatId);
+                    chatHistory.Add(new ChatMessage
+                    {
+                        ChatId = x.ChatId,
+                        UserId = x.UserId,
+                        ChatTitle = x.ChatTitle,
+                        Timestamp = x.Timestamp,
+                        Message = messagesList
+                    });
+                }
+            }
+
+            return chatHistory;
         }
-        private async Task<List<SubRegion>> GetAllSubRegionsConsumption()
+
+        private async Task<List<MyMessage>> GetAllChatMessages(int chatId)
         {
-            var response = await _subregionConsumptionDbService.GetAllSub_RegionConsumption();
-            var subregions = response.Data.Select(x => new SubRegion
+            var data = await _messageOfUsersDbService.GetAllChatMessages(chatId);
+            var messages = data?.Data?.Select(x => new MyMessage
             {
-                Daily_Usage = x.Daily_Usage,
-                Night_Usage = x.Night_Usage,
-                Spike_Usage = x.Spike_Usage,
-                Leakage_Propability = x.Leakage_Percent.Value,
-                SubRegion_Id = x.Sub_RegionId,
-                Region_Id = x.RegionId,
-                SubRegion_Name = x.Sub_RegionName,
-                Water_Sent = x.Water_Sent.Value,
-                Water_Used = x.Water_Payed.Value,
-                Water_Thats_OutStanding = x.OutstandingWater.Value,
-                FreeWater = x.FreeWater,
-                Consumption_Month = x.Date.Value
+                IsUser = x.IsUser,
+                Message = x.Message
             }).ToList();
-            return subregions;
+
+            return messages ?? new List<MyMessage>();
         }
-        private async Task<List<HouseHold>> GetAllHouseHoldConsumption(int subregionId)
+        private string GetRoleProfile(string role)
         {
-            var subregions = await GetAllSubRegionsConsumption();
-            var subregion = subregions.FirstOrDefault(x => x.SubRegion_Id == subregionId);
-            var response = await _houseConsumptionDbService.GetAllHouseConsumption();
-            var houses = response.Data.Select(x => new HouseHold
+            return role?.Trim().ToLower() switch
             {
-                Daily_Usage = x.Daily_Usage,
-                Night_Usage = x.Night_Usage,
-                Spike_Usage = x.Spike_Usage,
-                Leakage_Propability = x.Leakage_Percent.Value,
-                SubRegion_Id = x.Sub_RegionId.Value,
-                Household_Id = x.Household_ID.Length,
-                SubRegion_Name = subregion.SubRegion_Name,
-                Water_Received = x.Water_Received.Value,
-                Consumption_Month = x.Date.Value,
-                Account_Number = x.Owner_AccountNumber,
-                FreeWater = x.FreeWater
-            }).ToList();
-            return houses;
+                    "engineer" => @"
+                    This employee is responsible for hydraulic infrastructure.
+
+                    Prioritize:
+                    - Leakage detection
+                    - Water transmission anomalies
+                    - Regional and sub-regional consumption patterns
+                    - Night-time usage
+                    - Usage spikes
+                    - Structural infrastructure risks
+                    - Water sent versus water used
+                    - Relationships between regions, sub-regions and households
+
+                    When an anomaly is detected, trace it through the hierarchy
+                    and identify the most specific affected location possible.
+
+                    Do not focus on financial information.",
+
+                "finance" => @"
+                    This employee is responsible for financial analysis of the
+                    water network.
+
+                    Prioritize:
+                    - Water billing
+                    - Outstanding amounts
+                    - Expected versus actual amounts
+                    - Revenue discrepancies
+                    - Financial impact of water losses
+                    - Regional financial performance
+                    - Financial anomalies
+
+                    When possible, connect financial anomalies to the affected
+                    region or sub-region.",
+
+                "admin" => @"
+                    This employee oversees the overall water network operation.
+
+                    Prioritize:
+                    - Network-wide performance
+                    - Major regional anomalies
+                    - Operational risks
+                    - Severe leakage
+                    - Unusual consumption
+                    - System-level trends
+                    - Areas requiring immediate attention
+
+                    Provide a high-level operational overview.",
+
+                _ => @"
+                Provide a balanced overview of the available water infrastructure
+                data.
+
+                Focus on significant anomalies, consumption patterns, leakage,
+                operational risks and relationships between regions,
+                sub-regions and households."
+            };
         }
-        private async Task<List<HouseHold>> GetAllHouseHoldConsumption()
+        private string GenerateChatTitle(string prompt)
         {
-            var response = await _houseConsumptionDbService.GetAllHouseConsumption();
-            var houses = response.Data.Select(x => new HouseHold
-            {
-                Daily_Usage = x.Daily_Usage,
-                Night_Usage = x.Night_Usage,
-                Spike_Usage = x.Spike_Usage,
-                Leakage_Propability = x.Leakage_Percent.Value,
-                SubRegion_Id = x.Sub_RegionId.Value,
-                Household_Id = x.Household_ID.Length,
-                Water_Received = x.Water_Received.Value,
-                Consumption_Month = x.Date.Value,
-                Account_Number = x.Owner_AccountNumber,
-                FreeWater = x.FreeWater
-            }).ToList();
-            return houses;
+            if (string.IsNullOrWhiteSpace(prompt))
+                return "New Conversation";
+
+            string title = prompt.Trim();
+
+            title = Regex.Replace(title, @"\s+", " ");
+
+            if (title.Length > 45)
+                title = title.Substring(0, 45).Trim();
+
+            title = title.Trim('.', ',', '?', '!', ':', ';');
+
+            return title;
         }
+
+
+        private async Task<List<RegionHierarchyDto>> GetFullHydraulicHierarchyAsync()
+        {
+            var currentYear = DateTime.Now.Year;
+            var currentMonth = DateTime.Now.Month;
+
+            var regionsTask = _regionConsumptionDbService.GetAllRegionsConsumptions();
+            var subRegionsTask = _subregionConsumptionDbService.GetAllSub_RegionConsumption();
+            var housesTask = _houseConsumptionDbService.GetAllHouseConsumption();
+
+            await Task.WhenAll(regionsTask, subRegionsTask, housesTask);
+
+            var regionsData = regionsTask.Result.Data
+                .Where(r => r.Date.HasValue && r.Date.Value.Year == currentYear && r.Date.Value.Month == currentMonth);
+
+            var subRegionsData = subRegionsTask.Result.Data
+                .Where(sr => sr.Date.HasValue && sr.Date.Value.Year == currentYear && sr.Date.Value.Month == currentMonth);
+
+            var housesData = housesTask.Result.Data
+                .Where(h => h.Date.HasValue && h.Date.Value.Year == currentYear && h.Date.Value.Month == currentMonth);
+
+            var housesBySubRegion = housesData
+                .Where(h => h.Sub_RegionId.HasValue)
+                .GroupBy(h => h.Sub_RegionId!.Value)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(h => new HouseholdHierarchyDto
+                    {
+                        AccountNumber = h.Owner_AccountNumber,
+                        DailyUsage = h.Daily_Usage.GetValueOrDefault(),
+                        NightUsage = h.Night_Usage.GetValueOrDefault(),
+                        LeakagePercent = h.Leakage_Percent.GetValueOrDefault(),
+                        SpikeUsage = h.Spike_Usage.GetValueOrDefault()
+                    }).ToList()
+                );
+
+            var subRegionsByRegion = subRegionsData
+                .GroupBy(sr => sr.RegionId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(sr => new SubRegionHierarchyDto
+                    {
+                        SubRegionId = sr.Sub_RegionId,
+                        SubRegionName = sr.Sub_RegionName,
+                        WaterSent = sr.Water_Sent.GetValueOrDefault(),
+                        WaterUsed = sr.Water_Payed.GetValueOrDefault(),
+                        DailyUsage = sr.Daily_Usage.GetValueOrDefault(),
+                        NightUsage = sr.Night_Usage.GetValueOrDefault(),
+                        LeakagePercent = sr.Leakage_Percent.GetValueOrDefault(),
+                        SpikeUsage = sr.Spike_Usage.GetValueOrDefault(),
+                        Households = housesBySubRegion.GetValueOrDefault(sr.Sub_RegionId, new())
+                    }).ToList()
+                );
+
+            var hierarchy = regionsData.Select(r => new RegionHierarchyDto
+            {
+                RegionId = r.Region_Id,
+                RegionName = r.Region_Name,
+                WaterSent = r.Water_Sent.GetValueOrDefault(),
+                WaterUsed = r.Water_Payed.GetValueOrDefault(),
+                DailyUsage = r.Daily_Usage.GetValueOrDefault(),
+                NightUsage = r.Night_Usage.GetValueOrDefault(),
+                LeakagePercent = r.Leakage_Percent.GetValueOrDefault(),
+                SpikeUsage = r.Spike_Usage.GetValueOrDefault(),
+                SubRegions = subRegionsByRegion.GetValueOrDefault(r.Region_Id, new())
+            }).ToList();
+
+            return hierarchy;
+        }
+    }
+
+    public class RegionHierarchyDto
+    {
+        public int RegionId { get; set; }
+        public string RegionName { get; set; } = string.Empty;
+        public double WaterSent { get; set; }
+        public double WaterUsed { get; set; }
+        public double DailyUsage { get; set; }
+        public double NightUsage { get; set; }
+        public double LeakagePercent { get; set; }
+        public double SpikeUsage { get; set; }
+        public List<SubRegionHierarchyDto> SubRegions { get; set; } = new();
+    }
+
+    public class SubRegionHierarchyDto
+    {
+        public int SubRegionId { get; set; }
+        public string SubRegionName { get; set; } = string.Empty;
+        public double WaterSent { get; set; }
+        public double WaterUsed { get; set; }
+        public double DailyUsage { get; set; }
+        public double NightUsage { get; set; }
+        public double LeakagePercent { get; set; }
+        public double SpikeUsage { get; set; }
+        public List<HouseholdHierarchyDto> Households { get; set; } = new();
+    }
+
+    public class HouseholdHierarchyDto
+    {
+        public string AccountNumber { get; set; } = string.Empty;
+        public double DailyUsage { get; set; }
+        public double NightUsage { get; set; }
+        public double LeakagePercent { get; set; }
+        public double SpikeUsage { get; set; }
     }
 }

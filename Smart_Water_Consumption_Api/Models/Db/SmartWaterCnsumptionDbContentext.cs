@@ -5,11 +5,13 @@ namespace Smart_Water_Consumption_Api.Models.Db
 {
     public class SmartWaterCnsumptionDbContentext: DbContext
     {
-        public DbSet<Smart_Water_Consumption_Api.Models.SubRegionPrediction> SubRegionPrediction { get; set; } = default!;
-        public DbSet<Smart_Water_Consumption_Api.Models.RegionPrediction> RegionPrediction { get; set; } = default!;
-        public DbSet<Smart_Water_Consumption_Api.Models.HouseholdPrediction> HouseholdPrediction { get; set; } = default!;
-        public SmartWaterCnsumptionDbContentext(DbContextOptions<SmartWaterCnsumptionDbContentext> dbContextOptions) : base(dbContextOptions) { }
+        public SmartWaterCnsumptionDbContentext(DbContextOptions<SmartWaterCnsumptionDbContentext> options) : base(options)
+        {
+        }
 
+        public DbSet<Smart_Water_Consumption_Api.Models.SubRegionPrediction> SubRegionPrediction { get; set; }
+        public DbSet<Smart_Water_Consumption_Api.Models.RegionPrediction> RegionPrediction { get; set; }
+        public DbSet<Smart_Water_Consumption_Api.Models.HouseholdPrediction> HouseholdPrediction { get; set; }
         public DbSet<Owner> Owners { get; set; }
         public DbSet<HouseConsumption> HouseConsumptions { get; set; }
         public DbSet<OwnerPayment> OwnerPayments { get; set; }
@@ -25,6 +27,8 @@ namespace Smart_Water_Consumption_Api.Models.Db
         public DbSet<RegionPrediction> RegionPredictions { get; set; }
         public DbSet<SubRegionPrediction> SubRegionPredictions { get; set; }
         public DbSet<AppliancePrediction> AppliancePredictions { get; set; }
+        public DbSet<ChatMessage> ChatMessages { get; set; }
+        public DbSet<MessageOfUser> MessageOfUsers { get; set; }
 
     }
 

@@ -9,7 +9,7 @@
     double totalDistributed = Model.Sum(x => x.Water_Sent);
     double totalUsed = Model.Sum(x => x.Water_Used);
     double totalOutstanding = totalDistributed - totalUsed;
-    
+
     double totalFree = Model.Sum(x => x.FreeWater.HasValue ? x.FreeWater.Value : 0);
 }
 
@@ -19,8 +19,8 @@
         <a asp-action="RegionsPredictions" class="btn fw-bold shadow-sm" style="background-color: #ff3366; color: #fff; border-radius: 8px; padding: 10px 20px; text-decoration:none; transition: all 0.2s;">
             🔮 View Future Region Consumption
         </a>
-        <a asp-controller="Gemini" asp-action="SummarizeEngineeringReport" id="btnSumFinance" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px; padding: 10px 20px; transition: all 0.2s;">
-            ✨ Summarize Enginner Report
+        <a asp-controller="Gemini" asp-action="DropWiseAi" id="btnSumFinance" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px; padding: 10px 20px; transition: all 0.2s;">
+            ✨ Chat With Drop Wise Ai
         </a>
     </div>
 </div>
@@ -68,9 +68,7 @@
     </div>
 
     <div class="ms-auto d-flex align-items-center gap-3">
-        <a asp-controller="Gemini" asp-action="SummarizeEngineeringRegions" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; min-width: 190px; border-radius: 8px; padding: 8px 16px;">
-            ✨ Summarize Region Report
-        </a>
+        
         <button id="downloadBtn" class="btn fw-bold" style="background-color: #00f0ff; color: #121212; border-radius: 8px; padding: 8px 16px;">
             📥 Download Report
         </button>

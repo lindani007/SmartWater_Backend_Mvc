@@ -7,10 +7,16 @@
 
     double totalWaterSent = Model.Sum(x => x.Water_Sent);
     double totalWaterUsed = Model.Sum(x => x.Water_Used);
-    double totalWaterOutstanding = Model.Sum(x => x.Water_Thats_OutStanding);
+    double totalWaterOutstanding = totalWaterSent - totalWaterUsed;
     double avgLeakageProb = Model.Any() ? Model.Average(x => x.Leakage_Propability) : 0;
     double totalExpectedRevenue = Model.Sum(x => x.Expected_Cost);
-    double totalActualLostRevenue = 12.34;
+    double actualRevenue = Model.Sum(x => x.Actual_Cost);
+    double loss = Model.Sum(x => x.OutStanding_Cost);
+    double totalActualLostRevenue = totalExpectedRevenue - actualRevenue;
+    if (totalExpectedRevenue < 0)
+        totalExpectedRevenue = 0;
+    if (totalActualLostRevenue < 0)
+        totalActualLostRevenue = 0;
 }
 
 <div class="d-flex flex-wrap gap-3 m-3 p-3 rounded align-items-center" style="background-color: #1e1e24; border: 1px solid #333;">
@@ -32,8 +38,8 @@
     <div style="width: 2px; height: 30px; background-color: #333;" class="mx-1 d-none d-md-block"></div>
 
     <div class="d-flex flex-wrap gap-2">
-        <a asp-controller="Gemini" asp-action="SummarizeAdminRegionsReport" class="btn fw-bold px-4 shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px;">
-            ✨ Ai Summary
+        <a asp-controller="Gemini" asp-action="DropWiseAi" class="btn fw-bold px-4 shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px;">
+            ✨ Chat With Drop Wise Ai
         </a>
         <a asp-controller="Admin" asp-action="Employees" class="btn fw-bold px-4 shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px;">
             ➕ Add Employee
@@ -61,7 +67,7 @@
         <div class="p-3 rounded shadow-sm position-relative overflow-hidden" style="background-color: #1e1e24; border-left: 5px solid #28a745; border-top: 1px solid #333; border-right: 1px solid #333; border-bottom: 1px solid #333;">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <small class="text-white-50 text-uppercase d-block fw-bold mb-1" style="letter-spacing: 0.5px;">Expected Revenue</small>
+                    <small class="text-white-50 text-uppercase d-block fw-bold mb-1" style="letter-spacing: 0.5px;">Actual Revenue</small>
                     <h3 class="text-success fw-bold mb-0 mt-2" id="totalExpectedRevenueh3">R @totalExpectedRevenue.ToString("N2")</h3>
                 </div>
                 <span class="fs-4" style="color: rgba(40, 167, 69, 0.2);">💵</span>
@@ -74,7 +80,7 @@
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <small class="text-white-50 text-uppercase d-block fw-bold mb-1" style="letter-spacing: 0.5px;">Actual Lost Revenue</small>
-                    <h3 class="text-danger fw-bold mb-0 mt-2" id="totalActualLostRevenueh3">R @totalActualLostRevenue.ToString("F2")</h3>
+                    <h3 class="text-danger fw-bold mb-0 mt-2" id="totalActualLostRevenueh3">R @totalActualLostRevenue.ToString("N2")</h3>
                 </div>
                 <span class="fs-4" style="color: rgba(255, 51, 102, 0.2);">📉</span>
             </div>
@@ -85,8 +91,8 @@
         <div class="p-3 rounded shadow-sm position-relative overflow-hidden" style="background-color: #1e1e24; border-left: 5px solid #ffc107; border-top: 1px solid #333; border-right: 1px solid #333; border-bottom: 1px solid #333;">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <small class="text-white-50 text-uppercase d-block fw-bold mb-1" style="letter-spacing: 0.5px;">Average Leak Threat</small>
-                    <h3 class="text-warning fw-bold mb-0 mt-2" id="avgLeakageProbh3">@avgLeakageProb.ToString("F2")%</h3>
+                    <small class="text-white-50 text-uppercase d-block fw-bold mb-1" style="letter-spacing: 0.5px;">Expected Revenue</small>
+                    <h3 class="text-warning fw-bold mb-0 mt-2" id="avgLeakageProbh3">@totalExpectedRevenue.ToString("N2")</h3>
                 </div>
                 <span class="fs-4" style="color: rgba(255, 193, 7, 0.2);">⚠️</span>
             </div>
@@ -213,18 +219,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
             console.log(regions);
 
-            // ==========================
-            // Cards
-            // ==========================
 
             const totalWaterSent =
                 regions.reduce((sum, x) => sum + Number(x.water_Sent ?? 0), 0);
 
             const totalExpectedRevenue =
                 regions.reduce((sum, x) => sum + Number(x.extepected_Amount ?? 0), 0);
-                // regions.reduce((sum, x) => sum + Number(x.outStanding_Amount ?? 0), 0)
-            const totalActualLostRevenue =45.89;
+                const totalActualLostRevenue = regions.reduce((sum, x) => sum + Number(x.outStanding_Amount ?? 0), 0);
 
+                    const totalActaulRevenue =
+                                regions.reduce((sum, x) => sum + Number(x.actual_Amount ?? 0), 0);
+
+                            const lossAmt = (totalExpectedRevenue - totalActaulRevenue);
             const avgLeakageProb =
                 regions.length > 0
                     ? regions.reduce((sum, x) => sum + Number(x.leakage_Percent ?? 0), 0) / regions.length
@@ -235,23 +241,23 @@ document.addEventListener("DOMContentLoaded", function () {
                 ' <span class="fs-6 text-info fw-normal">kl</span>';
 
             document.getElementById("totalExpectedRevenueh3").innerText =
-                "R " + totalExpectedRevenue.toLocaleString("en-ZA", {
+                    "R " + totalActaulRevenue.toLocaleString("en-ZA", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                 });
 
             document.getElementById("totalActualLostRevenueh3").innerText =
-                "R " + totalActualLostRevenue.toLocaleString("en-ZA", {
+                    "R " + lossAmt.toLocaleString("en-ZA", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                 });
 
             document.getElementById("avgLeakageProbh3").innerText =
-                avgLeakageProb.toFixed(2) + "%";
+                            totalExpectedRevenue.toLocaleString("en-ZA", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
 
-            // ==========================
-            // High Risk Regions
-            // ==========================
 
             const topRegions = [...regions]
                 .sort((a, b) => b.leakage_Percent - a.leakage_Percent)
@@ -290,9 +296,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             document.getElementById("topLeakRegions").innerHTML = html;
 
-            // ==========================
-            // Chart
-            // ==========================
+
 
             leakProbabilities =
                 regions.map(x => Number(x.leakage_Percent));
@@ -317,9 +321,6 @@ document.addEventListener("DOMContentLoaded", function () {
     // Initial load
     loadDashboard();
 
-    // ==========================
-    // SignalR
-    // ==========================
 
     const connection = new signalR.HubConnectionBuilder()
         .withUrl("https://localhost:7203/dashboardHub")

@@ -191,7 +191,8 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
                     double daily = Math.Round(group.Sum(x => x.Daily_Usage / 1000 ?? 0), 2);
                     double night = Math.Round(group.Sum(x => x.Night_Usage / 1000 ?? 0), 2);
                     double cost = await CalculateExpectedAmount((daily + night), 6, group.Key);
-                     
+                    if (cost < 0)
+                        cost = 0;
                     newhouses.Add(new HouseConsumption
                     {
                         Household_ID = await GetOwnersHousId(group.Key),
@@ -256,7 +257,8 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
                 double daily = Math.Round(data.Sum(x => x.Daily_Usage / 1000 ?? 0), 2);
                 double night = Math.Round(data.Sum(x => x.Night_Usage / 1000 ?? 0), 2);
                 double cost = Math.Round(data.Sum(x => x.Cost ?? 0), 2);
-
+                if (cost < 0)
+                    cost = 0;
                 house.Daily_Usage = daily;
                 house.Night_Usage = night;
                 house.Total_WaterUsed = Math.Round((daily + night), 2);
@@ -344,7 +346,9 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
                     double leakPipeKl = Math.Round(leakagePipe / 1000, 2);
                     double dayambushKl = Math.Round(dayUmbush / 1000, 2);
                     double nightambushKl = Math.Round(nightUmbush / 1000, 2);
-
+                    double ambushCost = (leakPipeKl + dayambushKl + nightambushKl) * 18;
+                    if (ambushCost < 0)
+                        ambushCost = 0;
 
                     double watersent = Math.Round((group.Sum(x => x.Total_WaterUsed ?? 0) + dayambushKl + nightambushKl + leakPipeKl), 2);
                     double waterUsed = Math.Round((group.Sum(x => x.Total_WaterUsed ?? 0)), 2);
@@ -357,7 +361,7 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
                         Water_Payed = Math.Round(waterUsed, 2),
                         Leakage_Percent = leakagePercent,
                         Spike_Usage = group.Sum(x => x.Spike_Usage ?? 0),
-                        Extepected_Amount = group.Sum(x => x.Extepected_Amount ?? 0),
+                        Extepected_Amount = group.Sum(x => (x.Extepected_Amount ?? 0) + ambushCost),
                         Actual_Amount = group.Sum(x => x.Actual_Amount ?? 0),
                         OutStanding_Amount = group.Sum(x => x.OutStanding_Amount ?? 0),
                         FreeWater = group.Sum(x => x.FreeWater ?? 0),
@@ -405,7 +409,9 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
                 double leakPipeKl = Math.Round(leakagePipe / 1000, 2);
                 double dayambushKl = Math.Round(dayUmbush / 1000, 2);
                 double nightambushKl = Math.Round(nightUmbush / 1000, 2);
-
+                double ambushCost = (leakPipeKl + dayambushKl + nightambushKl) * 18;
+                if (ambushCost < 0)
+                    ambushCost = 0;
 
                 var data = houses.Where(x => x.Sub_RegionId == sub.Sub_RegionId).ToList();
                 
@@ -413,9 +419,8 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
                 double waterused = Math.Round(data.Sum(x => x.Total_WaterUsed ?? 0), 2);
                 double freewater = data.Sum(x => x.FreeWater.Value);
                 double cost = Math.Round(data.Sum(x => x.Actual_Amount ?? 0), 2);
-                double Actualcost =  await CalculateExpectedAmount(watersent, freewater, "0000000001");
-                double loss = Actualcost - cost;
-                if (loss <= 0)
+                double loss = (cost + ambushCost ) - cost;
+                if (loss < 0)
                     loss = 0.00;
                     
 
@@ -425,7 +430,7 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
                 sub.Night_Usage = Math.Round((data.Sum(x => x.Night_Usage ?? 0) + nightambushKl + leakPipeKl), 2);
                 sub.Leakage_Percent = leakagePercent;
                 sub.Spike_Usage = data.Sum(x => x.Spike_Usage ?? 0);
-                sub.Extepected_Amount = Math.Round(data.Sum(x => x.Extepected_Amount ?? 0), 2);
+                sub.Extepected_Amount = Math.Round(data.Sum(x => (x.Extepected_Amount ?? 0 + ambushCost )), 2);
                 sub.Actual_Amount = cost;
                 sub.OutStanding_Amount = Math.Round(loss);
                 sub.FreeWater = freewater;
@@ -512,6 +517,9 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
                     double dayambushKl = Math.Round(dayUmbush / 1000, 2);
                     double nightambushKl = Math.Round(nightUmbush / 1000, 2);
                     double leaks = leakPipeKl + dayambushKl + nightambushKl;
+                    double ambushCost = leaks * 18;
+                    if (ambushCost < 0)
+                        ambushCost = 0;
                     double watersent = Math.Round((group.Sum(x => x.Water_Sent.Value) + leaks), 2);
                     double waterUsed = Math.Round(group.Sum(x => x.Water_Payed ?? 0), 2);
                     double leakagePercent = Math.Round(((watersent - waterUsed) / watersent) * 100, 2);
@@ -523,7 +531,7 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
                         Water_Payed = Math.Round(waterUsed, 2),
                         Leakage_Percent = leakagePercent,
                         Spike_Usage = group.Sum(x => x.Spike_Usage ?? 0),
-                        Extepected_Amount = group.Sum(x => x.Extepected_Amount ?? 0),
+                        Extepected_Amount = group.Sum(x => (x.Extepected_Amount ?? 0) + ambushCost),
                         Actual_Amount = group.Sum(x => x.Actual_Amount ?? 0),
                         OutStanding_Amount = Math.Round(group.Sum(x => x.OutStanding_Amount ?? 0), 2),
                         FreeWater = group.Sum(x => x.FreeWater ?? 0),
@@ -571,6 +579,9 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
                 double dayambushKl = Math.Round((dayUmbush / 1000), 2);
                 double nightambushKl = Math.Round((nightUmbush / 1000), 2);
                 double leaks = leakPipeKl + dayambushKl + nightambushKl;
+                double ambushCost = leaks * 18;
+                if (ambushCost < 0)
+                    ambushCost = 0;
                 var data = subs.Where(x => x.RegionId == region.Region_Id).ToList();
                 double waterused = Math.Round(data.Sum(x => x.Water_Payed ?? 0), 2);
                 double watersent = Math.Round((data.Sum(x => x.Water_Sent.Value) + leaks), 2);
@@ -584,7 +595,7 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
                 region.Night_Usage = Math.Round(data.Sum(x => x.Night_Usage ?? 0), 2) + nightambushKl;
                 region.Leakage_Percent = Math.Round(((watersent - waterused) / watersent) * 100, 2);
                 region.Spike_Usage = data.Sum(x => x.Spike_Usage ?? 0);
-                region.Extepected_Amount = data.Sum(x => x.Extepected_Amount ?? 0);
+                region.Extepected_Amount = data.Sum(x => (x.Extepected_Amount ?? 0) + ambushCost);
                 region.Actual_Amount = cost;
                 region.OutStanding_Amount = loss;
                 region.FreeWater = freewater;
@@ -756,7 +767,8 @@ namespace Smart_Water_Consumption_Service.Services.SimulationService
                 double estimatedHourCost = await CalculateApplianceConsumptionCost(appliance.Owner_AccountNumber, propValue, (futurePredictions.nextHour / 1000));
                 double estimatedWeekCost = await CalculateApplianceConsumptionCost(appliance.Owner_AccountNumber, propValue, (futurePredictions.nextWeek / 1000));
                 double estimatedMonthCost = await CalculateApplianceConsumptionCost(appliance.Owner_AccountNumber, propValue, (futurePredictions.nextMonth / 1000));
-
+                if (estimatedMonthCost < 0)
+                    estimatedMonthCost = 0;
                 AppliancePrediction appliancePrediction =  await AddFuturePrediction(appliance.Owner_AccountNumber, appliance.Appliance_Name, futurePredictions.nextHour, futurePredictions.nextWeek, futurePredictions.nextMonth,estimatedHourCost, estimatedWeekCost, estimatedMonthCost);
                 appliancePredictions.Add(appliancePrediction);
 

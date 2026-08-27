@@ -175,14 +175,14 @@ public partial class LeakageViewModel : ObservableObject
         List<AppliancePredictionDisplay> appliancePredictionDisplays = filteredData.Select(x => new AppliancePredictionDisplay
         {
             ApplianceName = x.Appliance_Name,
-            PredictedCost = x.EstimatedMonthCost,
+            PredictedCost = Math.Max(0, x.EstimatedMonthCost),
             PredictedWaterKl = Math.Round(x.PredictedMonthConsumptionKl / 1000, 2),
             PredictedHourConsumptionKl = x.PredictedHourConsumptionKl,
             PredictedWeekConsumptionKl = x.PredictedWeekConsumptionKl,
             PredictedMonthConsumptionKl = x.PredictedMonthConsumptionKl,
-            EstimatedHourCost = x.EstimatedHourCost,
-            EstimatedWeekCost = x.EstimatedWeekCost,
-            EstimatedMonthCost = x.EstimatedMonthCost
+            EstimatedHourCost = Math.Max(0, x.EstimatedHourCost),
+            EstimatedWeekCost = Math.Max(0, x.EstimatedWeekCost),
+            EstimatedMonthCost = Math.Max(0, x.EstimatedMonthCost)
         }).ToList();
 
         PredictedNextMonthTotalKl = Math.Round(appliancePredictionDisplays.Sum(x => x.PredictedWaterKl), 2);

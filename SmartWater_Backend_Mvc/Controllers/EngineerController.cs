@@ -33,86 +33,88 @@ namespace SmartWater_Backend_Mvc.Controllers
         [HttpGet]
         public async Task<IActionResult> Regions()
         {
-            List<RegionConsumption> regions = await GetRegionConsumptions();
-            return View(regions);
+            try
+            {
+                return View(await GetRegionConsumptions());
+            }
+            catch (Exception ex)
+            {
+                return RedirectToAction("Login", "Account");
+            }
         }
 
         [HttpGet]
         public async Task<IActionResult> SubRegionsEngineer(int id)
         {
-            List<SubRegion> regions = await GetAllSubRegionsConsumption();
-            List<SubRegion> subregions = new List<SubRegion>();
-            subregions = regions.Where(x => x.Region_Id == id).ToList();
-            return View(subregions);
+            try
+            {
+                List<SubRegion> regions = await GetAllSubRegionsConsumption();
+                List<SubRegion> subregions = new List<SubRegion>();
+                subregions = regions.Where(x => x.Region_Id == id).ToList();
+                return View(subregions);
+            }
+            catch (Exception ex)
+            {
+                return RedirectToAction("Regions");
+            }
         }
 
         [HttpGet]
         public async Task<IActionResult> EnginnerHouseHolds(int id)
         {
-            List<HouseHold> houses = await GetAllHouseHoldConsumption(id);
-            List<HouseHold> subregions = new List<HouseHold>();
-            subregions = houses.Where(x => x.SubRegion_Id == id).ToList();
-            return View(subregions);
+            try
+            {
+                List<HouseHold> houses = await GetAllHouseHoldConsumption(id);
+                List<HouseHold> subregions = new List<HouseHold>();
+                subregions = houses.Where(x => x.SubRegion_Id == id).ToList();
+                return View(subregions);
+            }
+            catch (Exception ex)
+            {
+                return RedirectToAction("SubRegionsEngineer");
+            }
         }
 
         [HttpGet]
         public async Task<IActionResult> RegionsPredictions()
         {
-            List<RegionPrediction> regions = await GetAllRegionsPredictions();
-            return View(regions);
+            try
+            {
+                return View(await GetAllRegionsPredictions());
+            }
+            catch (Exception ex)
+            {
+                return RedirectToAction("Regions");
+            }
         }
 
         [HttpGet]
         public async Task<IActionResult> SubRegionsPredictions()
         {
-            List<SubRegionPrediction> regions = await GetAllSubRegionsPredictions();
-            return View(regions);
+            try
+            {
+                return View(await GetAllSubRegionsPredictions());
+
+            }
+            catch (Exception ex)
+            {
+                return RedirectToAction("SubRegionsEngineer");
+            }
         }
 
         [HttpGet]
         public async Task<IActionResult> HouseholdPredictions()
         {
-            List<HouseholdPrediction> regions = await GetAllHousholdPredictions();
-            return View(regions);
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> SummarizeEngineeringReport(string userPrompt)
-        {           
-            var prompt = "";
             try
             {
-                var regionsTask = GetRegionConsumptions();
-                var subRegionsTask = GetAllSubRegionsConsumption();
-                var houseHoldsTask = GetAllHouseHoldConsumption();
-
-                await Task.WhenAll(regionsTask, subRegionsTask, houseHoldsTask);
-
-                var contextData = new
-                {
-                    LiveRegions = regionsTask.Result,
-                    LiveSubRegions = subRegionsTask.Result,
-                    RegionPredictions = houseHoldsTask.Result
-                };
-                string serializedJsonData = System.Text.Json.JsonSerializer.Serialize(contextData);
-
-                string systemPrompt = prompt;
-
-                string executionPrompt = $"{systemPrompt}\n\n" +
-                                         $"### LIVE DATABASE CONTEXT PAYLOAD:\n{serializedJsonData}\n\n" +
-                                         $"### USER QUERY:\n{userPrompt}\n\n" +
-                                         $"Execute processing matrix and respond using clear markdown layout:";
-
-                GeminiCore geminiCore = new GeminiCore();
-                var response = geminiCore.GetGeminiResponse(executionPrompt);
-
-                return View("_AiReportViewer", Json(new { aiResponse = response }));
+                return View(await GetAllHousholdPredictions());
             }
             catch (Exception ex)
             {
-                return Json(new { aiResponse = $"❌ AI Engine Failure: {ex.Message}" });
+                return RedirectToAction("EnginnerHouseHolds");
             }
         }
+
         private async Task<List<RegionConsumption>> GetRegionConsumptions()
         {
             var response = await _regionConsumptionDbService.GetAllRegionsConsumptions();

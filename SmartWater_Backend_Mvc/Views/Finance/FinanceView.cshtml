@@ -5,12 +5,12 @@
     ViewData["Title"] = "Regions";
     Layout = "_FinanceLayout";
 
-    // Calculate aggregated server metrics
     double totalExpected = Model.Sum(x => x.Expected_Cost);
-    double totalActual = 479.87; // Model.Sum(x => x.Actual_Cost);
-    double totalOutstanding = 45.89;
-    // 
-    double totalOutstndingWater = Model.Sum(x => x.Water_Sent) - Model.Sum(x => x.Water_Used);
+    double totalActual =  Model.Sum(x => x.Actual_Cost);
+    double totalOutstanding =  totalExpected - totalActual;
+    double totalDistributed = Model.Sum(x => x.Water_Sent);
+    double totalUsed = Model.Sum(x => x.Water_Used);
+    double totalOutstndingWater = totalDistributed - totalUsed;
 }
 
 <div style="display:flex; flex-direction: row; justify-content: space-between; align-items: center; padding: 10px 20px;">
@@ -19,8 +19,8 @@
         <a asp-controller="Engineer" asp-action="RegionsPredictions" class="btn fw-bold shadow-sm" style="background-color: #ff3366; color: #fff; border-radius: 8px; padding: 10px 20px; text-decoration:none; transition: all 0.2s;">
             🔮 View Future Region Consumption
         </a>
-        <a asp-controller="Gemini" asp-action="SummarizeFinanceReport" id="btnSumFinance" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px; padding: 10px 20px; transition: all 0.2s;">
-            ✨ Summarize Finance Report
+        <a asp-controller="Gemini" asp-action="DropWiseAi" id="btnSumFinance" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px; padding: 10px 20px; transition: all 0.2s;">
+            ✨ Chat With Drop Wise Ai
         </a>
     </div>
 </div>
@@ -60,9 +60,7 @@
         </select>
     </div>
     <div class="ms-auto d-flex align-items-center gap-3">
-        <a asp-controller="Gemini" asp-action="SummarizeFinanceRegions" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; min-width: 190px; border-radius: 8px; padding: 8px 16px;">
-            ✨ Summarize Region Report
-        </a>
+        
         <button id="downloadBtn" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px; padding: 8px 16px;">
             📥 Download Report
         </button>

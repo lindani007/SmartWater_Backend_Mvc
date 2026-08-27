@@ -1,6 +1,7 @@
 using Smart_Water_Consumption_Service;
 using Smart_Water_Consumption_Service.Models;
 using Smart_Water_Consumption_Service.Services;
+using Smart_Water_Consumption_Service.Services.AiService.DeepLearningModel;
 using Smart_Water_Consumption_Service.Services.DbServices;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,6 +27,9 @@ ApplianceDbService applianceDbService = new ApplianceDbService(apiBaseUrl);
 RegionPredictionDbService regionPredictionDbService = new RegionPredictionDbService(apiBaseUrl);
 Sub_RegionPredictionDbService sub_RegionPredictionDbService = new Sub_RegionPredictionDbService(apiBaseUrl);
 HouseholdPredictionDbService householdPredictionDbService = new HouseholdPredictionDbService(apiBaseUrl);
+MyLLMAiService myLLMAiService = new MyLLMAiService(apiBaseUrl);
+MessageOfUsersDbService messageOfUsersDbService = new MessageOfUsersDbService(apiBaseUrl);
+ChatMessagesDbService chatMessagesDbService = new ChatMessagesDbService(apiBaseUrl);
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(60);
