@@ -8,7 +8,7 @@
     <ScrollView>
         <VerticalStackLayout Padding="12" Spacing="12">
             <StackLayout Orientation="Horizontal" HorizontalOptions="Center">
-                <Border Padding="12" Margin="4"  WidthRequest="130" HeightRequest="100" BackgroundColor="#29ede7">
+                <Border Padding="12" Margin="4"  WidthRequest="200" HeightRequest="100" BackgroundColor="#29ede7">
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="10"/>
                     </Border.StrokeShape>
@@ -17,10 +17,10 @@
                     </Border.Shadow>
                     <VerticalStackLayout Padding="10">
                         <Label Text="Current Water Used" TextColor="Black" FontAttributes="Bold" />
-                        <Label Text="{Binding CurrentWaterUsed, StringFormat='{0.00:N0} L'}" TextColor="Black" FontSize="24" />
+                        <Label Text="{Binding CurrentWaterUsed, StringFormat='{0:F2} L'}" TextColor="Black" FontSize="24" />
                     </VerticalStackLayout>
                 </Border>
-                <Border Padding="12" Margin="4" WidthRequest="130" HeightRequest="100" BackgroundColor="#29ede7">
+                <Border Padding="12" Margin="4" WidthRequest="200" HeightRequest="100" BackgroundColor="#29ede7">
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="10"/>
                     </Border.StrokeShape>
@@ -29,7 +29,7 @@
                     </Border.Shadow>
                     <VerticalStackLayout Padding="10">
                         <Label Text="Balance to Settle" FontAttributes="Bold" TextColor="Black"/>
-                        <Label Text="{Binding BalanceToSettled, StringFormat='R{0.00:00}'}" FontSize="24" TextColor="Black"/>
+                        <Label Text="{Binding BalanceToSettled, StringFormat='R{0:F2}'}" FontSize="24" TextColor="Black"/>
                     </VerticalStackLayout>
                 </Border>
             </StackLayout>

@@ -33,7 +33,6 @@
                 <th scope="col" class="text-white-50">Region Name</th>
                 <th scope="col" class="text-white-50">Add Citezen</th>
                 <th scope="col" class="text-white-50">Edit</th>
-                <th scope="col" class="text-white-50">Delete</th>
             </tr>
         </thead>
         <tbody id="subRegionsTableBody">
@@ -48,7 +47,6 @@
                     <td class="regname-cell text-white">@region.Region_Name</td>
                     <td><a asp-action="AddCitezens" asp-route-id="@region.Id" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px; padding: 10px 20px; text-decoration: none; display: inline-block; transition: all 0.2s;">Add Citezen</a></td>
                     <td><a asp-action="EditSubRegion" asp-route-id="@region.Id" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px; padding: 10px 20px; text-decoration: none; display: inline-block; transition: all 0.2s;">Edit</a></td>
-                    <td><a asp-action="DeleteSubRegion" asp-route-id="@region.Id" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px; padding: 10px 20px; text-decoration: none; display: inline-block; transition: all 0.2s;">Delete</a></td>
                 </tr>
             }
         </tbody>

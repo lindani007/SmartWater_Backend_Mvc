@@ -8,10 +8,17 @@
 
 <div id="aiViewContainer" class="chat-container">
 
-    <div class="chat-header">
+    <div class="chat-header" style="display: flex; justify-content: space-between; align-items: center; width: 90%;">
         <div>
             <div class="title">✨ Drop Wise Intelligence</div>
             <small>Analysis Assistant</small>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <a asp-action="AdminDashboard" asp-controller="Admin"
+               class="btn btn-outline-light"
+               style="background-color: #0d6efd; color: #ffffff; border: 1px solid #0d6efd; padding: 8px 20px; border-radius: 6px; font-weight: 500; text-decoration: none; transition: all 0.2s ease-in-out;">
+                Back to Dashboard
+            </a>
         </div>
     </div>
 

@@ -43,7 +43,9 @@ namespace SmartWater_Backend_Mvc.Controllers
                     ViewData["Message"] = result;
                     return View();
                 }
-                ViewData["Message"] = VerifyLogin(login.Stuff_Id, login.Password);
+                var error = ModelState.Select(x => x.Value).SelectMany(e => e.Errors).Select(m => m.ErrorMessage);
+
+                ViewData["Message"] = error;
                 return View(login);
             }
             catch (Exception ex)

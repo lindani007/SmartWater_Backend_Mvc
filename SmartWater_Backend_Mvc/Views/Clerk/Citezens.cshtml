@@ -49,9 +49,8 @@
                     <th class="text-white-50">Account Number</th>
                     <th class="text-white-50">Contact Details</th>
                     <th class="text-white-50">Sub-Region</th>
-                    <th class="text-white-50">Arrears Balance</th>
-                    <th class="text-white-50 text-center">Status</th>
                     <th class="text-white-50 text-center">Edit Citezen</th>
+                    <th class="text-white-50 text-center">Delete Citezen</th>
                 </tr>
             </thead>
             <tbody id="ownersTableBody">
@@ -73,20 +72,9 @@
                             <small class="text-white-50 email-cell">@owner.Email</small>
                         </td>
                         <td class="text-white region-cell">@owner.SubRegionName</td>
-                        <td class="balance-cell @(owner.IsPaid ? "text-success" : "text-danger") fw-bold" data-val="@owner.OutstandingBalance">
-                            R @owner.OutstandingBalance.ToString("N2")
-                        </td>
-                        <td class="text-center status-cell">
-                            @if (owner.IsPaid)
-                            {
-                                <span class="badge bg-success px-3 py-2 fw-bold text-uppercase">Paid</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-danger px-3 py-2 fw-bold text-uppercase">Unpaid</span>
-                            }
-                        </td>
+                       
                         <td><a asp-action="EditCitezens" asp-route-id="@owner.OwnerId_Number" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px; padding: 10px 20px; text-decoration: none; display: inline-block; transition: all 0.2s;">Edit</a></td>
+                        <td><a asp-action="EditCitezens" asp-route-id="@owner.OwnerId_Number" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px; padding: 10px 20px; text-decoration: none; display: inline-block; transition: all 0.2s;">Delete</a></td>
                     </tr>
                 }
             </tbody>

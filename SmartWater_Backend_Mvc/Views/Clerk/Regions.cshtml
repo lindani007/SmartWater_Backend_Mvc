@@ -32,7 +32,6 @@
                 <th scope="col" class="text-white-50">Meter Number</th>
                 <th scope="col" class="text-white-50">Add Sub-Regions</th>
                 <th scope="col" class="text-white-50">Edit</th>
-                <th scope="col" class="text-white-50">Delete</th>
             </tr>
         </thead>
         <tbody id="regionsTableBody">
@@ -45,7 +44,6 @@
                     <td class="meter-cell text-white">@region.Meter_Number</td>
                     <td><a asp-action="AddSubRegion" asp-route-id="@region.Region_Id" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px; padding: 10px 20px; text-decoration: none; display: inline-block; transition: all 0.2s;">Add Sub-Regions</a></td>
                     <td><a asp-action="EditRegion" asp-route-id="@region.Region_Id" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px; padding: 10px 20px; text-decoration: none; display: inline-block; transition: all 0.2s;">Edit</a></td>
-                    <td><a asp-action="DeleteRegion" asp-route-id="@region.Region_Id" class="btn fw-bold shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px; padding: 10px 20px; text-decoration: none; display: inline-block; transition: all 0.2s;">Delete</a></td>
                 </tr>
             }
         </tbody>

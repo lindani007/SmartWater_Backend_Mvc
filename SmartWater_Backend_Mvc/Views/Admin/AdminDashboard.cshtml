@@ -22,16 +22,16 @@
 <div class="d-flex flex-wrap gap-3 m-3 p-3 rounded align-items-center" style="background-color: #1e1e24; border: 1px solid #333;">
     <div class="me-auto">
         <h2 class="text-white my-0 fw-bold d-flex align-items-center gap-2">
-            ⚡ Admin Portal <span class="badge bg-secondary fs-7 fw-normal" style="background-color: #2a2a30 !important; color: #00f0ff !important; border: 1px solid #00f0ff;">@Model.Count() Regions Monitored</span>
+           ⚡ Admin Portal <span class="badge bg-secondary fs-7 fw-normal" style="background-color: #2a2a30 !important; color: #00f0ff !important; border: 1px solid #00f0ff;">@Model.Count() Regions Monitored</span>
         </h2>
     </div>
 
     <div class="d-flex gap-2">
         <a asp-controller="Finance" asp-action="FinanceView" class="btn fw-bold px-4 shadow-sm" style="background-color: #121212; color: #00f0ff; border: 1px solid #00f0ff; border-radius: 8px; transition: all 0.2s;">
-            📁 Finance Portal
+           💵 Finance Portal
         </a>
         <a asp-controller="Engineer" asp-action="Regions" class="btn fw-bold px-4 shadow-sm" style="background-color: #121212; color: #00f0ff; border: 1px solid #00f0ff; border-radius: 8px; transition: all 0.2s;">
-            🛠️ Engineering Portal
+           ⚒ Engineering Portal
         </a>
     </div>
 
@@ -39,13 +39,13 @@
 
     <div class="d-flex flex-wrap gap-2">
         <a asp-controller="Gemini" asp-action="DropWiseAi" class="btn fw-bold px-4 shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px;">
-            ✨ Chat With Drop Wise Ai
+            ✨Chat With Drop Wise Ai
         </a>
         <a asp-controller="Admin" asp-action="Employees" class="btn fw-bold px-4 shadow-sm" style="background-color: #00f0ff; color: #121212; border-radius: 8px;">
             ➕ Add Employee
         </a>
-        <a asp-controller="Admin" asp-action="Owners" class="btn btn-outline-danger fw-bold px-4 shadow-sm" style="border-radius: 8px; border-color: #ff3366; color: #ff3366;">
-            🚨 Review Outstanding Accounts
+        <a asp-controller="Account" asp-action="Login" class="btn btn-outline-danger fw-bold px-4 shadow-sm" style="border-radius: 8px; border-color: #ff3366; color: #ff3366;">
+            Logout
         </a>
     </div>
 </div>
@@ -79,7 +79,7 @@
         <div class="p-3 rounded shadow-sm position-relative overflow-hidden" style="background-color: #1e1e24; border-left: 5px solid #ff3366; border-top: 1px solid #333; border-right: 1px solid #333; border-bottom: 1px solid #333;">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <small class="text-white-50 text-uppercase d-block fw-bold mb-1" style="letter-spacing: 0.5px;">Actual Lost Revenue</small>
+                    <small class="text-white-50 text-uppercase d-block fw-bold mb-1" style="letter-spacing: 0.5px;">Actual Loss Revenue</small>
                     <h3 class="text-danger fw-bold mb-0 mt-2" id="totalActualLostRevenueh3">R @totalActualLostRevenue.ToString("N2")</h3>
                 </div>
                 <span class="fs-4" style="color: rgba(255, 51, 102, 0.2);">📉</span>
@@ -92,7 +92,7 @@
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <small class="text-white-50 text-uppercase d-block fw-bold mb-1" style="letter-spacing: 0.5px;">Expected Revenue</small>
-                    <h3 class="text-warning fw-bold mb-0 mt-2" id="avgLeakageProbh3">@totalExpectedRevenue.ToString("N2")</h3>
+                    <h3 class="text-warning fw-bold mb-0 mt-2" id="avgLeakageProbh3">R @totalExpectedRevenue.ToString("N2")</h3>
                 </div>
                 <span class="fs-4" style="color: rgba(255, 193, 7, 0.2);">⚠️</span>
             </div>

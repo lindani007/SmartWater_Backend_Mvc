@@ -33,8 +33,9 @@
                         </Border.StrokeShape>
                         <Button Text="My Appliances"  BackgroundColor="#05faeb" Clicked="AppliancesClicked"/>
                     </Border>
-                    <StackLayout HeightRequest="250">
-                        
+
+                    <StackLayout HeightRequest="200">
+
                     </StackLayout>
                     <StackLayout Margin="10" Orientation="Horizontal" VerticalOptions="End" BackgroundColor="#29ede7">
                         <StackLayout Padding="10" VerticalOptions="End">

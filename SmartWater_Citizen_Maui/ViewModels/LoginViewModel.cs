@@ -88,7 +88,7 @@ namespace SmartWater_Citizen_Maui.ViewModels
                 await App.Current.MainPage.DisplayAlertAsync("Login Failed", results, "Retry");
                 return;
             }
-            await App.Current.MainPage.DisplayAlertAsync("Login Sucesful","Welcome to Smart Consumption","Okay");
+            await App.Current.MainPage.DisplayAlertAsync("Login Successful","Welcome to Smart Consumption","Okay");
 
             bool haveAppliances = await DoesUserHasAddedAnyAppliances(AccountNumber);
             if (haveAppliances)

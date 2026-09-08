@@ -9,7 +9,7 @@
         <VerticalStackLayout Grid.Row="0" Padding="15" Spacing="5">
             <Label Text="{Binding Billing_Month, StringFormat='Usage Details: {0}'}" TextColor="#29ede7" FontSize="20" FontAttributes="Bold"/>
             <StackLayout Orientation="Horizontal" HorizontalOptions="Center">
-                <Border Padding="12" Margin="4"  WidthRequest="130" HeightRequest="100" BackgroundColor="#29ede7">
+                <Border Padding="12" Margin="4"  WidthRequest="180" HeightRequest="100" BackgroundColor="#29ede7">
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="10"/>
                     </Border.StrokeShape>
@@ -21,7 +21,7 @@
                         <Label Text="{Binding Total_Water_Liters, StringFormat='{0:N1}L'}" TextColor="Black" FontSize="24" />
                     </VerticalStackLayout>
                 </Border>
-                <Border Padding="12" Margin="4" WidthRequest="130" HeightRequest="100" BackgroundColor="#29ede7">
+                <Border Padding="12" Margin="4" WidthRequest="180" HeightRequest="100" BackgroundColor="#29ede7">
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="10"/>
                     </Border.StrokeShape>

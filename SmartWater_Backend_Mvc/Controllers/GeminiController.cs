@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.VisualBasic;
 using Smart_Water_Consumption_Service.Services.AiService.DeepLearningModel;
 using Smart_Water_Consumption_Service.Services.DbServices;
 using SmartWater_Backend_Mvc.Models;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace SmartWater_Backend_Mvc.Controllers
 {
@@ -70,48 +72,48 @@ namespace SmartWater_Backend_Mvc.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> QueryDatabasePrompt(string prompt, int chatId = 0)
+        public async Task<IActionResult> QueryDatabasePrompt(string prompt, int chatId)
         {
-            string staffId = HttpContext.Session.GetString("stuffId");
-            var staff = await _employeeDbService.GetEmployee(staffId);
 
+            string staffId = HttpContext.Session.GetString("stuffId") ?? string.Empty;
+            var staff = await _employeeDbService.GetEmployee(staffId);
+            var currentHistory = await FetchAllUserChatHistory(staffId);
             if (string.IsNullOrWhiteSpace(prompt))
             {
-                var currentHistory = await FetchAllUserChatHistory(staffId);
                 ViewBag.ActiveChatId = chatId;
                 return PartialView("AiView", currentHistory);
             }
-
             try
             {
-                string analyticalSystemPrompt = $@"
-        You are DropWise Intelligence, an AI assistant for a municipal water infrastructure management system.
-
-        ### CURRENT EMPLOYEE
-        Name: {staff.Data.EmployeeFullNames}
-        Role: {staff.Data.EmployeeRole}
-
-        ### ROLE-SPECIFIC RESPONSIBILITY
-        {GetRoleProfile(staff.Data.EmployeeRole)}
-
-        ### GENERAL CONTEXT
-        The interface already displays live water infrastructure data.
-        Do NOT recreate raw data tables.
-        Do NOT define basic terminology.
-        Do NOT output raw LaTeX equations.
-
-        ### OBJECTIVE
-        Answer the employee's question using supplied data directly and concisely.
-        ";
+                string analyticalSystemPrompt = $@"You are DropWise Intelligence, an AI assistant for a municipal water infrastructure management system. ## CURRENT EMPLOYEE Name: {staff.Data.EmployeeFullNames} Role: {staff.Data.EmployeeRole} ### ROLE-SPECIFIC RESPONSIBILITY ### GENERAL CONTEXT The interface already displays live water infrastructure data. Do NOT recreate raw data tables. Do NOT define basic terminology. Do NOT output raw LaTeX equations. ### OBJECTIVE Answer the employee's question using supplied data directly and concisely.";
 
                 var mydata = await GetFullHydraulicHierarchyAsync();
-                var contextData = new { HydraulicRegions = mydata };
-                string serializedJsonData = JsonSerializer.Serialize(contextData);
+                var relevantData = await GetRelevantHydraulicDataAsync(prompt, chatId, currentHistory);
 
-                string executionPrompt = $"{analyticalSystemPrompt}\n\n" +
-                                         $"### LIVE HYDRAULIC NETWORK CONTEXT PAYLOAD:\n{serializedJsonData}\n\n" +
-                                         $"### FIELD AUDIT REQUEST:\n{prompt}\n\n" +
-                                         $"Generate the professional brief:";
+                string serializedJsonData =
+                    JsonSerializer.Serialize(relevantData);
+
+                string conversationContext = await GetConversationContextAsync(staffId, chatId, 8);
+
+                string executionPrompt = analyticalSystemPrompt + "\n\n";
+
+                if (!string.IsNullOrWhiteSpace(conversationContext))
+                {
+                    executionPrompt +=
+                        $"### ONGOING CONVERSATION CONTEXT:\n" +
+                        $"This is an ongoing conversation. Use the previous conversation " +
+                        $"to understand references such as 'that', 'it', 'those regions', " +
+                        $"'continue', or follow-up questions.\n\n" +
+                        $"{conversationContext}\n\n";
+                }
+
+                executionPrompt +=
+                    $"### RELEVANT LIVE HYDRAULIC DATA:\n" +
+                    $"{serializedJsonData}\n\n" +
+                    $"### CURRENT USER REQUEST:\n" +
+                    $"{prompt}\n\n" +
+                    $"Respond directly to the user's current request. " +
+                    $"Do not restart the conversation or repeat previous answers.";
 
 
                 var response = await _myAi.GetLLMResponse(executionPrompt);
@@ -347,6 +349,178 @@ namespace SmartWater_Backend_Mvc.Controllers
 
             return hierarchy;
         }
+
+        private async Task<object> GetRelevantHydraulicDataAsync(string prompt,int chatId, List<ChatMessage> conversation)
+        {
+            string combinedText = prompt + " " + string.Join(" ", conversation.Select(x => x.Message));
+
+            string text = combinedText.ToLower();
+
+            bool asksForRegion =
+                text.Contains("region") ||
+                text.Contains("regional");
+
+            bool asksForSubRegion =
+                text.Contains("subregion") ||
+                text.Contains("sub region") ||
+                text.Contains("area");
+
+            bool asksForHousehold =
+                text.Contains("household") ||
+                text.Contains("home") ||
+                text.Contains("house") ||
+                text.Contains("account");
+
+            bool asksForLeakage =
+                text.Contains("leakage") ||
+                text.Contains("leak");
+
+            bool asksForConsumption =
+                text.Contains("consumption") ||
+                text.Contains("usage") ||
+                text.Contains("water used");
+
+            bool asksForSpike =
+                text.Contains("spike") ||
+                text.Contains("high usage") ||
+                text.Contains("unusual usage");
+
+            bool asksForNightUsage =
+                text.Contains("night") ||
+                text.Contains("night usage");
+
+            if (asksForHousehold)
+            {
+                var houses =
+                    await _houseConsumptionDbService
+                        .GetAllHouseConsumption();
+
+                return houses.Data
+                    .Select(h => new
+                    {
+                        h.Owner_AccountNumber,
+                        h.Sub_RegionId,
+                        h.Daily_Usage,
+                        h.Night_Usage,
+                        h.Leakage_Percent,
+                        h.Spike_Usage
+                    })
+                    .ToList();
+            }
+
+            if (asksForSubRegion)
+            {
+                var subRegions =
+                    await _subregionConsumptionDbService
+                        .GetAllSub_RegionConsumption();
+
+                return subRegions.Data
+                    .Select(sr => new
+                    {
+                        sr.RegionId,
+                        sr.Sub_RegionId,
+                        sr.Sub_RegionName,
+                        sr.Water_Sent,
+                        sr.Water_Payed,
+                        sr.Daily_Usage,
+                        sr.Night_Usage,
+                        sr.Leakage_Percent,
+                        sr.Spike_Usage
+                    })
+                    .ToList();
+            }
+
+            if (asksForRegion)
+            {
+                var regions =
+                    await _regionConsumptionDbService
+                        .GetAllRegionsConsumptions();
+
+                return regions.Data
+                    .Select(r => new
+                    {
+                        r.Region_Id,
+                        r.Region_Name,
+                        r.Water_Sent,
+                        r.Water_Payed,
+                        r.Daily_Usage,
+                        r.Night_Usage,
+                        r.Leakage_Percent,
+                        r.Spike_Usage
+                    })
+                    .ToList();
+            }
+
+            if (asksForLeakage ||
+                asksForConsumption ||
+                asksForSpike ||
+                asksForNightUsage)
+            {
+                var regionsTask =
+                    _regionConsumptionDbService
+                        .GetAllRegionsConsumptions();
+
+                var subRegionsTask =
+                    _subregionConsumptionDbService
+                        .GetAllSub_RegionConsumption();
+
+                await Task.WhenAll(
+                    regionsTask,
+                    subRegionsTask
+                );
+
+                return new
+                {
+                    Regions = regionsTask.Result.Data
+                        .Select(r => new
+                        {
+                            r.Region_Id,
+                            r.Region_Name,
+                            r.Daily_Usage,
+                            r.Night_Usage,
+                            r.Leakage_Percent,
+                            r.Spike_Usage
+                        }),
+
+                    SubRegions = subRegionsTask.Result.Data
+                        .Select(sr => new
+                        {
+                            sr.RegionId,
+                            sr.Sub_RegionId,
+                            sr.Sub_RegionName,
+                            sr.Daily_Usage,
+                            sr.Night_Usage,
+                            sr.Leakage_Percent,
+                            sr.Spike_Usage
+                        })
+                };
+            }
+            return new
+            {
+                Message =
+                    "No specific infrastructure data was required for this question."
+            };
+        }
+
+        private async Task<string> GetConversationContextAsync(string staffId, int chatId, int messageLimit = 8)
+        {
+            if (chatId == 0)
+                return string.Empty;
+
+            var messagesResult =
+                await _messageOfUsersDbService
+                    .GetAllChatMessages(chatId);
+
+            var messages = messagesResult.Data
+                .Where(x => x.ChatId == chatId)
+                .TakeLast(messageLimit)
+                .Select(x =>
+                    $"{(x.IsUser ? "User" : "Assistant")}: {x.Message}"
+                )
+                .ToList();
+
+            return string.Join("\n\n", messages);
+        }
     }
 
     public class RegionHierarchyDto
@@ -383,4 +557,6 @@ namespace SmartWater_Backend_Mvc.Controllers
         public double LeakagePercent { get; set; }
         public double SpikeUsage { get; set; }
     }
+
+
 }
